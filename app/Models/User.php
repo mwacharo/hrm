@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Salary;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasPermissions;
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions;
+
+  /**
+   * The attributes that are mass assignable.
+   *
+   * @var array<int, string>
+   */
+
+  protected $fillable = [
+    'firstname',
+    'lastname',
+    'email',
+    'phone',
+    'password',
+    'employment_date',
+    'staffID',
+    'gender',
+    'date_of_birth',
+    'national_id',
+    'is_enabled',
+    'department_id',
+    'designation_id',
+    'unit_id',
+    'super_admin',
+    'office_id',
+    'avatar',
+  ];
+
+  protected $hidden = [
+    'password',
+    'remember_token',
+  ];
+
+  /**
+   * The attributes that should be cast.
+   *
+   * @var array<string, string>
+   */
+  protected $casts = [
+    'email_verified_at' => 'datetime',
+    'password' => 'hashed',
+  ];
+
+  public function unit()
+  {
+    return $this->belongsTo(Unit::class, 'unit_id');
+  }
+
+  public function office()
+  {
+    return $this->belongsTo(Office::class);
+  }
+
+  public function designation()
+  {
+    return $this->belongsTo(Designation::class);
+  }
+
+  public function salary()
+  {
+    return $this->hasOne(Salary::class);
+  }
+
+  public function user_detail()
+  {
+    return $this->hasOne(UserDetail::class);
+  }
+
+  public function leaveBalances()
+  {
+    return $this->hasMany(LeaveBalance::class);
+  }
+
+  public function attendances()
+  {
+
+    return $this->hasMany(Attendance::class);
+  }
+
+  public function complaints()
+  {
+    return $this->hasMany(Complaint::class);
+  }
+
+  public function tickets()
+  {
+    return $this->hasMany(Ticket::class);
+  }
+
+  public function ticketComments()
+  {
+    return $this->hasMany(TicketComment::class);
+  }
+
+  public function trainings()
+  {
+    return $this->belongsToMany(Training::class, 'training_user', 'user_id', 'training_id')
+      ->withTimestamps();
+  }
+
+  public function disciplinaries()
+  {
+    return $this->hasMany(Disciplinary::class, 'user_id');
+  }
+
+  public function department()
+  {
+    return $this->belongsTo(Department::class);
+  }
+
+  public function leaves()
+  {
+    return $this->hasMany(Leave::class);
+  }
+
+  public function calculateLeaveTaken($leaveName)
+  {
+    $leaveTaken = 0;
+
+    // Retrieve leave balance for the specified leave type
+    $leaveBalance = $this->leaveBalances()->whereHas('leaveType', function ($query) use ($leaveName) {
+      $query->where(\Illuminate\Support\Facades\DB::raw('LOWER(name)'), 'LIKE', '%' . strtolower($leaveName) . '%');
+    })->first();
+
+    // If leave balance is found, calculate leave taken
+    if ($leaveBalance) {
+      $leaveType = $leaveBalance->leaveType;
+      $leaveTaken = $leaveType->days - $leaveBalance->balance;
+      $leaveTaken = max($leaveTaken, 0); // Ensure leave taken is not negative
+    }
+
+    return $leaveTaken;
+  }
+
+  public function activityLogs()
+  {
+    return $this->hasMany(ActivityLog::class);
+  }
+
+}
