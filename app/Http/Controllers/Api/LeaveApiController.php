@@ -28,10 +28,17 @@ class LeaveApiController extends Controller
         $query->whereNull('deleted_at');
       });
 
-    if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
-      dd($request->user_ids);
-      $query->whereIn('user_id', $request->input('user_ids'));
-    }
+    // if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
+    //   // dd($request->user_ids);
+    //   $query->whereIn('user_id', $request->input('user_ids'));
+    // }
+
+
+
+if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
+  $userIds = collect($request->input('user_ids'))->flatten()->toArray();
+  $query->whereIn('user_id', $userIds);
+}
 
     if ($request->has('unit_ids') && is_array($request->input('unit_ids'))) {
 

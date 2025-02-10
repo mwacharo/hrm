@@ -11,6 +11,8 @@
             </v-btn>
           </v-toolbar>
 
+
+          <!-- start filter options -->
           <v-card-text>
             <v-container>
               <v-row>
@@ -49,6 +51,7 @@
               </v-row>
             </v-container>
           </v-card-text>
+          <!-- end of filter options -->
           <v-card-actions class="justify-end">
             <v-btn class="bg-primary" @click="filterLeaves"><v-icon>mdi-magnify</v-icon></v-btn>
             <v-progress-circular v-if="isLoading" class="ml-2" color="primary" indeterminate>
@@ -57,7 +60,7 @@
         </v-card>
       </v-navigation-drawer>
       <v-main>
-        <v-row class="my-3">
+        <!-- <v-row class="my-3">
           <v-select v-model="filterOptions.application_date" :items="application_date" label="Application Date"
             variant="outlined" dense class="mx-1">
           </v-select>
@@ -67,8 +70,8 @@
           <v-select v-model="filterOptions.leave_type_ids" :items="leaveTypes" item-value="id" item-title="name"
             label="Leave Type" variant="outlined" dense class="mx-1">
           </v-select>
-          <v-select v-model="filterOptions.user_ids" :items="users" label="Employee(s)"  item-value="id" item-title="firstname" variant="outlined" dense
-            class="mx-1">
+          <v-select v-model="filterOptions.user_ids" :items="users" label="Employee(s)" item-value="id"
+            item-title="fullname" variant="outlined" dense class="mx-1">
           </v-select>
           <v-select v-filterOptions="filterOptions.unit" :items="countries" label="Branch" item-value="id"
             item-title="name" variant="outlined" dense class="mx-1">
@@ -76,11 +79,11 @@
           <v-btn icon>
             <v-icon>mdi mdi-refresh</v-icon>
           </v-btn>
-        </v-row>
+        </v-row> -->
         <v-row v-if="stats.awaitingApproval > 0">
           <v-col cols="12" md="8">
             <v-text-field v-model="search" label="Search" variant="underlined" clearable @clear="clearSearch"
-              prepend-inner-icon="mdi-magnify">
+              @input="performSearch" prepend-inner-icon="mdi-magnify">
             </v-text-field>
           </v-col>
           <v-col cols="auto">
@@ -132,6 +135,7 @@
 
           </v-data-table>
         </v-card>
+
         <!-- view Leave Dialog -->
         <v-dialog v-model="viewLeaveModal" max-width="600px" persistent responsive>
           <v-card class="view-leave-card">
@@ -412,7 +416,11 @@ export default {
 
       axios.get(apiUrl)
         .then(response => {
-          const allLeaves = response.data.leaves.filter(leave => leave.status == 'Pending' || leave.status == 'Manager Approved' || leave.status == 'Hr Approved').map(leave => {
+          const allLeaves = response.data.leaves.filter(leave =>
+            leave.status == 'Pending' ||
+            leave.status == 'Manager Approved' ||
+            leave.status == 'Hr Approved'
+          ).map(leave => {
             if (leave.user && leave.user.firstname && leave.user.lastname) {
               leave.user.fullName = `${leave.user.firstname} ${leave.user.lastname}`;
             } else {
@@ -422,23 +430,26 @@ export default {
           });
 
           if (this.user) {
-            if (this.user.is_hod === 1) {
-              // HR or Line Managers for other departments
-              if (this.user.is_hr) {
-                // HR
-                this.pendingLeaves = allLeaves.filter(leave => leave.status === 'Pending' || leave.status === 'Manager Approved');
-              } else {
-                // Line Managers for other departments
-                this.pendingLeaves = allLeaves.filter(leave => leave.status === 'Pending');
-              }
+            console.log("User  is logged in:", this.user);
+
+            if (this.user.is_hr) {
+              console.log("User  is HR.");
+              // HR: See 'Pending' and 'Manager Approved' leaves
+              this.pendingLeaves = allLeaves.filter(leave => leave.status === 'Pending' || leave.status === 'Manager Approved');
+              console.log("Pending leaves for HR:", this.pendingLeaves); // Debugging: Log the pending leaves for HR
             } else if (this.user.is_hod === 1) {
-              // HOD
+              console.log("User  is HOD.");
+              // this.pendingLeaves = allLeaves.filter(leave => leave.status === 'Approved' || leave.status === 'Hr Approved');
               this.pendingLeaves = allLeaves.filter(leave => leave.status === 'Hr Approved');
+              console.log("Pending leaves for HOD:", this.pendingLeaves); // Debugging: Log the pending leaves for HOD
             } else {
-              // Other roles
+              console.log("User  is neither HR nor HOD."); // Debugging: Log that the user is neither HR nor HOD
+              // Other roles: See all filtered leaves
               this.pendingLeaves = allLeaves;
+              console.log("All leaves for other roles:", this.pendingLeaves); // Debugging: Log all leaves for other roles
             }
           } else {
+            console.log("No user logged in."); // Debugging: Log that no user is logged in
             // No user logged in
             this.pendingLeaves = [];
           }
@@ -457,6 +468,26 @@ export default {
         .finally(() => {
           this.loading = false;
         });
+    }
+    ,
+
+
+    performSearch() {
+      if (this.search) {
+        this.pendingLeaves = this.pendingLeaves.filter(leave => {
+          // Search across multiple fields
+          const searchTermLower = this.search.toLowerCase();
+          return (
+            leave.user.fullName.toLowerCase().includes(searchTermLower) ||
+            leave.leave_type.name.toLowerCase().includes(searchTermLower) ||
+            leave.status.toLowerCase().includes(searchTermLower) ||
+            leave.from.toLowerCase().includes(searchTermLower) ||
+            leave.to.toLowerCase().includes(searchTermLower)
+          );
+        });
+      } else {
+        this.fetchLeaves(); // Reload original data
+      }
     },
 
     filterLeaves() {
