@@ -140,16 +140,23 @@ class DashboardApiController extends Controller
 
         $leaveBalance = $annualLeaveBalance ? $annualLeaveBalance->balance : 0;
 
-
+        $currentYear = Carbon::now()->year;
+  
         $leaveTaken = Leave::where('user_id', $user->id)
             ->where('status', 'Approved')
+            ->whereYear('created_at', $currentYear)
             ->whereHas('leave_type', function ($query) {
                 $query->where('name', 'REGEXP', '(Annual|annual|annual[_ ]?leave|Annual[_ ]?Leave)');
             })
             ->sum('days') ?? '0';
 
-        $annualLeaveDaysAssigned = LeaveType::where('name', 'REGEXP', '(Annual|annual|annual[_ ]?leave|Annual[_ ]?Leave)')->first()->days ?? '0';
+        // $annualLeaveDaysAssigned = LeaveType::where('name', 'REGEXP', '(Annual|annual|annual[_ ]?leave|Annual[_ ]?Leave)')->first()->days ?? '0';
 
+
+
+        $annualLeaveDaysAssigned = LeaveBalance::where('leave_type_id', 1)->where('user_id', $user->id)
+        ->pluck('balance')->first();
+        // dd($annualLeaveDaysAssigned);
         $notifications = 0;
 
         $earlyAttendances = Attendance::where('user_id', $user->id)->where('status', 'In Time')->count();
