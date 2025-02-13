@@ -2,9 +2,11 @@
 
 namespace App\Http;
 
+use App\Jobs\AddMonthlyLeaveBalance;
 use App\Models\Leave;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends HttpKernel
 {
@@ -70,14 +72,31 @@ class Kernel extends HttpKernel
 
     protected function schedule(Schedule $schedule)
     {
+
+        Log::info("Schedule is running...");
+
         $schedule->call(function () {
             Leave::where('to', '<', now())->update(['is_active' => false]);
         })->daily();
+
+        // $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance())->everyMinute();
+
+
+
+        // Run the job monthly
+        // $schedule->job(new AddMonthlyLeaveBalance())->everyTwoMinutes()
+        $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance)->monthlyOn(1, '00:00')
+
+            ->onSuccess(function () {
+                Log::info(" AddMonthlyLeaveBalance job dispatched successfully.");
+            })
+            ->onFailure(function ($exception) {
+                Log::error("Failed to dispatch job: " . $exception->getMessage());
+            });
     }
 
     protected $routeMiddleware = [
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'no-register' => \App\Http\Middleware\NoRegister::class,
     ];
-
 }
