@@ -71,7 +71,8 @@
                   </v-col>
 
                   <v-col cols="12" md="6">
-                    <v-text-field v-model="newLeave.days" label="Days" type="number" variant="outlined" class="rounded-lg"
+                    <v-text-field v-model="newLeave.days" label="Days" type="number" variant="outlined"
+                      class="rounded-lg"
                       :rules="[v => !!v || 'Days are required', v => v > 0 || 'Days must be greater than 0']"></v-text-field>
                   </v-col>
 
@@ -93,12 +94,13 @@
 
                   <v-col cols="12" md="6">
                     <v-select v-model="newLeave.hod" :items="hods" label="HOD" item-value="id" item-title="fullname"
-                    variant="outlined" clearable class="rounded-lg" :rules="[v => !!v || 'HOD is required']"></v-select>
+                      variant="outlined" clearable class="rounded-lg"
+                      :rules="[v => !!v || 'HOD is required']"></v-select>
                   </v-col>
 
                   <v-col cols="12" md="6">
-                    <v-text-field v-model="newLeave.phone" label="Phone" type="text" placeholder="254" variant="outlined"
-                      class="rounded-lg"
+                    <v-text-field v-model="newLeave.phone" label="Phone" type="text" placeholder="254"
+                      variant="outlined" class="rounded-lg"
                       :rules="[v => !!v || 'Phone number is required', v => /^[+254]\d{9,12}$/.test(v) || 'Invalid phone number']"></v-text-field>
                   </v-col>
 
@@ -174,9 +176,15 @@
                     </v-select>
                   </v-col>
                   <v-col cols="12">
-                    <v-file-input v-model="selectedLeave.document" label="Attach Document (Optional)"
+                    <!-- <v-file-input v-model="selectedLeave.document" label="Attach Document (Optional)"
                       accept=".pdf, .doc, .docx, .png" outlined clearable>
+                    </v-file-input> -->
+
+
+                    <v-file-input v-model="selectedLeave.document" label="Attach Document (Optional)"
+                      accept=".pdf, .doc, .docx, .png" outlined clearable @change="handleFileUpload">
                     </v-file-input>
+
                   </v-col>
                   <v-col cols="12">
                     <v-textarea v-model="selectedLeave.comment" label="Comment (Optional)" outlined clearable>
@@ -354,6 +362,15 @@ export default {
     this.fetchLeaveTypes();
   },
   methods: {
+
+    handleFileUpload(file) {
+    if (file) {
+      console.log('File selected:', file); // Debugging
+      this.newLeave.document = file;
+    } else {
+      console.log('No file selected');
+    }
+  },
     capitalizeAction(action) {
       return action.replace(/\b\w/g, (char) => char.toUpperCase());
     },
@@ -424,130 +441,136 @@ export default {
     },
 
     submitNewLeave() {
-      if (this.$refs.createLeaveForm.validate()) {
-        this.isLoading = true;
-        const formData = new FormData();
-        formData.append('user_id', this.userId);
-        formData.append('leave_type_id', this.newLeave.leave_type_id);
-        formData.append('from', this.newLeave.from);
-        formData.append('to', this.newLeave.to);
-        formData.append('phone', this.newLeave.phone);
-        formData.append('days', this.newLeave.days);
-        formData.append('manager', this.newLeave.manager);
-        formData.append('hod', this.newLeave.hod);
-        formData.append('comment', this.newLeave.comment);
-        if (this.newLeave.document && this.newLeave.document[0]) {
-          formData.append('document', this.newLeave.document[0]);
-        }
+  if (this.$refs.createLeaveForm.validate()) {
+    this.isLoading = true;
+    const formData = new FormData();
+    formData.append('user_id', this.userId);
+    formData.append('leave_type_id', this.newLeave.leave_type_id);
+    formData.append('from', this.newLeave.from);
+    formData.append('to', this.newLeave.to);
+    formData.append('phone', this.newLeave.phone);
+    formData.append('days', this.newLeave.days);
+    formData.append('manager', this.newLeave.manager);
+    formData.append('hod', this.newLeave.hod);
+    formData.append('comment', this.newLeave.comment);
 
-        axios.post('/api/v1/leaves', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-          .then(response => {
-            this.fetchLeaves();
-            this.isLoading = false;
-            this.$toastr.success(response.data.message);
-            this.createLeaveModal = false;
-          })
-          .catch(error => {
-            this.isLoading = false;
-            if (error.response && error.response.data && error.response.data.error) {
-              this.$toastr.error(error.response.data.error);
-            } else {
-              this.$toastr.error(error.message);
-            }
-          });
+  
+    if (this.newLeave.document) {
+      console.log('Appending file:', this.newLeave.document); 
+      formData.append('document', this.newLeave.document);
+    } else {
+      console.log('No file selected');
+    }
+
+    axios.post('/api/v1/leaves', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    .then(response => {
+      this.fetchLeaves();
+      this.isLoading = false;
+      this.$toastr.success(response.data.message);
+      this.createLeaveModal = false;
+    })
+    .catch(error => {
+      this.isLoading = false;
+      if (error.response && error.response.data && error.response.data.error) {
+        this.$toastr.error(error.response.data.error);
+      } else {
+        this.$toastr.error(error.message);
       }
-    },
-    getDocumentUrl(documentName) {
-      return `/storage/leave/documents/${documentName}`;
-    },
-    submitEdittedLeave() {
-      if (this.$refs.editLeaveForm.validate()) {
-        const formData = {
-          leave_type_id: this.selectedLeave.leave_type_id,
-          from: this.selectedLeave.from,
-          to: this.selectedLeave.to,
-          days: this.selectedLeave.days,
-          manager: this.selectedLeave.manager,
-          hod: this.selectedLeave.hod,
-          document: this.selectedLeave.document,
-          comment: this.selectedLeave.comment,
-          phone: this.selectedLeave.phone,
-        };
+    });
+  }
+},
 
-        const apiUrl = this.base_url + `api/v1/leaves/${this.selectedLeave.id}`;
-        axios.put(apiUrl, formData)
-          .then(response => {
-            this.fetchLeaves();
-            this.$toastr.success('Leave updated successfully!');
-            this.closeModals();
-          })
-          .catch(error => {
-            this.$toastr.error('Error updating leave!');
-          });
-      }
-    },
-    submitCancelLeave() {
-      const leaveId = this.selectedLeave.id;
-      const cancelComment = this.cancelComment.trim();
-
-      if (!cancelComment || !cancelComment.split(/\s+/).some(word => word.length > 0)) {
-        this.showErrorToast('Cancellation reason should contain at least one word');
-        return;
-      }
-      const formData = new FormData();
-      formData.append('user_id', this.userId);
-      formData.append('comment', cancelComment);
-
-      axios.put(`/api/v1/leaves/cancel/${leaveId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-        .then(response => {
-          this.showSuccessToast(response.data.message);
-          this.fetchLeaves();
-          this.closeCancelModals();
-        })
-        .catch(error => {
-          this.showErrorToast('Error cancelling leave.');
-          console.error('Cancel leave error:', error);
-        });
-    },
-    capitalizeEachWord(string) {
-      return string.replace(/\b\w/g, c => c.toUpperCase());
-    },
-
-    showErrorToast(message) {
-      this.$toastr.error(message);
-    },
-
-    showSuccessToast(message) {
-      this.$toastr.success(message);
-    },
-    closeCancelModals() {
-      this.cancelLeaveModal = false;
-      this.cancelComment = '';
-      this.selectedLeave = {};
-    },
-    openLogsModal(item) {
-
-      const apiUrl = `${this.base_url}api/v1/leaves/${item.id}/logs`;
-
-      axios.get(apiUrl)
-        .then(response => {
-          this.logs = response.data.logs;
-        })
-        .catch(error => {
-          console.error('Error fetching logs:', error);
-        })
-        .finally(() => {
-          this.logsModal = true;
-        });
-    },
+  getDocumentUrl(documentName) {
+    return `/storage/leave/documents/${documentName}`;
   },
+  submitEdittedLeave() {
+    if (this.$refs.editLeaveForm.validate()) {
+      const formData = {
+        leave_type_id: this.selectedLeave.leave_type_id,
+        from: this.selectedLeave.from,
+        to: this.selectedLeave.to,
+        days: this.selectedLeave.days,
+        manager: this.selectedLeave.manager,
+        hod: this.selectedLeave.hod,
+        document: this.selectedLeave.document,
+        comment: this.selectedLeave.comment,
+        phone: this.selectedLeave.phone,
+      };
+
+      const apiUrl = this.base_url + `api/v1/leaves/${this.selectedLeave.id}`;
+      axios.put(apiUrl, formData)
+        .then(response => {
+          this.fetchLeaves();
+          this.$toastr.success('Leave updated successfully!');
+          this.closeModals();
+        })
+        .catch(error => {
+          this.$toastr.error('Error updating leave!');
+        });
+    }
+  },
+  submitCancelLeave() {
+    const leaveId = this.selectedLeave.id;
+    const cancelComment = this.cancelComment.trim();
+
+    if (!cancelComment || !cancelComment.split(/\s+/).some(word => word.length > 0)) {
+      this.showErrorToast('Cancellation reason should contain at least one word');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('user_id', this.userId);
+    formData.append('comment', cancelComment);
+
+    axios.put(`/api/v1/leaves/cancel/${leaveId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+      .then(response => {
+        this.showSuccessToast(response.data.message);
+        this.fetchLeaves();
+        this.closeCancelModals();
+      })
+      .catch(error => {
+        this.showErrorToast('Error cancelling leave.');
+        console.error('Cancel leave error:', error);
+      });
+  },
+  capitalizeEachWord(string) {
+    return string.replace(/\b\w/g, c => c.toUpperCase());
+  },
+
+  showErrorToast(message) {
+    this.$toastr.error(message);
+  },
+
+  showSuccessToast(message) {
+    this.$toastr.success(message);
+  },
+  closeCancelModals() {
+    this.cancelLeaveModal = false;
+    this.cancelComment = '';
+    this.selectedLeave = {};
+  },
+  openLogsModal(item) {
+
+    const apiUrl = `${this.base_url}api/v1/leaves/${item.id}/logs`;
+
+    axios.get(apiUrl)
+      .then(response => {
+        this.logs = response.data.logs;
+      })
+      .catch(error => {
+        console.error('Error fetching logs:', error);
+      })
+      .finally(() => {
+        this.logsModal = true;
+      });
+  },
+},
 };
 </script>
