@@ -90,7 +90,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/overtime', [OvertimeController::class, 'index']);
     Route::get('/tasks', [TaskController::class, 'index'])->name('projects');
     Route::get('/jobs', [JobController::class, 'index'])->name('jobs');
-    Route::get('/resources', [ResourceController::class, 'index']);
+    // Route::get('/resources', [ResourceController::class, 'index']);
     Route::get('/trainings', [TrainingController::class, 'index']);
     Route::get('/users', [UserController::class, 'index'])->name("users");
     Route::get('/biometrics', [UserController::class, 'biometrics'])->name("biometrics");
@@ -140,6 +140,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/timeline', [UserController::class, 'timeline']);
     // requestions
     Route::get('/requisitions', [RequisitionController::class, 'index']);
+    Route::get('/resources', [ResourceController::class, 'index']);
+
 
 });
 

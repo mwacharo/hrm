@@ -12,5 +12,11 @@
 @endsection
 
 @section('content')
-    <resources :user_id="{{ $user_id }}"/>
+
+
+    <resources 
+        :user="{{ json_encode($user) }}" 
+        :roles="{{ json_encode($roles) }}" 
+        :permissions="{{ json_encode($permissions) }}" 
+    />
 @endsection

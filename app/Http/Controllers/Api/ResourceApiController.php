@@ -6,6 +6,7 @@ use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class ResourceApiController extends Controller
 {
@@ -13,7 +14,17 @@ class ResourceApiController extends Controller
     {
         $name = $request->input('name');
 
+        // $query = Asset::with('issuedTo', 'issuedBy', 'department', 'office');
+
+
+
+
+    if (Auth::user()->hasRole('admin')) {
         $query = Asset::with('issuedTo', 'issuedBy', 'department', 'office');
+    } else {
+        $query = Asset::with('issuedTo', 'issuedBy', 'department', 'office')
+            ->where('issued_to', Auth::id()); // Fetch only assets issued to the logged-in user
+    }
 
         if ($name) {
             $query->where('name', $name);

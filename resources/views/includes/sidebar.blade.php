@@ -73,6 +73,11 @@
                         <a href="/resources"><i class="la la-suitcase"></i> <span>Resources</span></a>
                     </li>
 
+                    <li>
+                    <a href="/requisitions"><i class="la la-check-circle"></i> <span>Requisitions</span></a>
+
+                    </li>
+
                     <li class="submenu">
                         <a href="javascript:void(0);" data-toggle="collapse" data-bs-target="#performance"><i
                                 class="la la-bar-chart"></i>
@@ -130,7 +135,11 @@
                         <ul id="my-account-menu" class="collapse">
                             <li><a href="/account">My Account</a></li>
                             <li><a href="/employee-attendance">Attendances</a></li>
-                            <li><a href="/employee-assets">Assets Assigned</a></li>
+                            <!-- <li><a href="/employee-assets">Assets Assigned</a></li> -->
+                            <li><a href="/resources">Assets Assigned</a></li>
+                            <li><a href="/requisitions">Requisitions</a></li>
+
+
                         </ul>
                     </li>
 

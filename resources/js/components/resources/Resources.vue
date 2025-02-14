@@ -1,6 +1,7 @@
 <template>
     <v-container-fluid>
         <div class="text-center">
+
             <v-chip @click="filterLaptops" class="ma-2" color="indigo" prepend-icon="mdi-laptop">
                 Laptops: {{ assets.laptops }}
             </v-chip>
@@ -252,10 +253,13 @@
 <script>
 export default {
     props: {
-        user_id: {
-            type: Number,
-            required: true
-        }
+        props: {
+        user: Object,
+        roles: Array,
+        permissions: Array
+    },
+
+ 
     },
     data() {
         return {
@@ -315,8 +319,13 @@ export default {
     },
 
     mounted() {
+        console.log("User:", this.user);
+        console.log("Roles:", this.roles);
+        console.log("Permissions:", this.permissions);
         this.fetchResources();
         this.fetchUsers();
+
+   
     },
     methods: {
 

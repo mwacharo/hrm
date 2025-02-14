@@ -250,10 +250,12 @@
 export default {
 
   props: {
-    userId: {
-      type: [Number, Number],
-      required: true
-    }
+        props: {
+        user: Object,
+        roles: Array,
+        permissions: Array
+    },
+
   },
   data() {
     return {
@@ -574,6 +576,14 @@ export default {
     },
   },
   async mounted() {
+
+ 
+        console.log("User:", this.user);
+        console.log("Roles:", this.roles);
+        console.log("Permissions:", this.permissions);
+     
+   
+  
     await this.fetchStats();
     await this.fetchRequisitions();
   },
