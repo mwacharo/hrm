@@ -84,7 +84,7 @@
             </v-text-field> -->
 
 
-            <v-text-field v-model="attendanceForm.time" label="Time (Readonly)" type="time" :value="serverTime" outlined
+            <v-text-field v-model="serverTime" label="Time (Readonly)" type="time"  outlined
               dense readonly class="mb-4">
             </v-text-field>
 
@@ -296,7 +296,7 @@ export default {
       const formData = {
         attendance_type: this.attendanceForm.attendance_type,
         attendance_date: this.getCurrentDate(),
-        time: this.currentTime,
+        time: this.serverTime,
         notes: this.attendanceForm.notes,
         user_id: this.userId,
         latitude: this.deviceLatitude,
