@@ -22,7 +22,7 @@
             <v-col>
                 <v-row justify="start" class="text-right">
                     <v-col cols="auto">
-                        <v-btn @click="resourceClear" variant="tonal" icon>
+                        <v-btn v-if="roles.includes('admin')" @click="resourceClear" variant="tonal" icon>
                             <v-tooltip activator="parent" location="top">Asset clearance</v-tooltip>
                             <v-icon color="warning" x-small>mdi-format-rotate-90</v-icon>
                         </v-btn>
@@ -32,25 +32,25 @@
             <v-col>
                 <v-row justify="end" class="text-right">
                     <v-col cols="auto">
-                        <v-btn @click="addResource" icon>
+                        <v-btn  v-if="roles.includes('admin')" @click="addResource" icon>
                             <v-tooltip activator="parent" location="top">Add Resource</v-tooltip>
                             <v-icon color="primary">mdi-plus</v-icon>
                         </v-btn>
                     </v-col>
                     <v-col cols="auto" v-if="resources.length > 0">
-                        <v-btn @click="openFilterDialog" icon>
+                        <v-btn  v-if="roles.includes('admin')" @click="openFilterDialog" icon>
                             <v-tooltip activator="parent" location="top">Filter Resource</v-tooltip>
                             <v-icon color="primary" x-small>mdi-filter</v-icon>
                         </v-btn>
                     </v-col>
                     <v-col cols="auto" v-if="resources.length > 0">
-                        <v-btn @click.prevent="downloadReport" icon>
+                        <v-btn v-if="roles.includes('admin')" @click.prevent="downloadReport" icon>
                             <v-tooltip activator="parent" location="top">Generate Report</v-tooltip>
                             <v-icon color="success" x-small>mdi-download</v-icon>
                         </v-btn>
                     </v-col>
                     <v-col cols="auto">
-                        <v-btn @click.prevent="refreshResources" icon>
+                        <v-btn v-if="roles.includes('admin')" @click.prevent="refreshResources" icon>
                             <v-tooltip activator="parent" location="top">Refresh Assets</v-tooltip>
                             <v-icon color="danger" x-small>mdi-refresh</v-icon>
                         </v-btn>
@@ -89,19 +89,19 @@
                     </template>
 
                     <template v-slot:item.actions="{ item }">
-                        <td class="d-flex justify-content-around align-items-center">
+                        <td   class="d-flex justify-content-around align-items-center">
                             <!-- Edit User -->
-                            <v-icon @click="editResource(item)" title="Edit User" color="primary">
+                            <v-icon  v-if="roles.includes('admin')" @click="editResource(item)" title="Edit User" color="primary">
                                 mdi-pencil
                             </v-icon>
 
                             <!-- Issue to a User -->
-                            <v-icon @click="openAssignUserModal(item)" title="Issue to a user" color="orange">
+                            <v-icon v-if="roles.includes('admin')" @click="openAssignUserModal(item)" title="Issue to a user" color="orange">
                                 mdi-account-arrow-right
                             </v-icon>
 
                             <!-- Schedule Maintenance -->
-                            <v-icon @click="scheduleMaintence(item)" title="Schedule Maintenance" color="blue">
+                            <v-icon  v-if="roles.includes('admin')" @click="scheduleMaintence(item)" title="Schedule Maintenance" color="blue">
                                 mdi-calendar-clock
                             </v-icon>
 
@@ -111,7 +111,7 @@
                             </v-icon>
 
                             <!-- Delete Resource -->
-                            <v-icon @click="deleteResource(item)" title="Delete" color="red">
+                            <v-icon v-if="roles.includes('admin')" @click="deleteResource(item)" title="Delete" color="red">
                                 mdi-delete
                             </v-icon>
                         </td>
@@ -252,13 +252,10 @@
 </template>
 <script>
 export default {
-    props: {
         props: {
         user: Object,
         roles: Array,
         permissions: Array
-    },
-
  
     },
     data() {

@@ -28,6 +28,9 @@
             </v-btn>
 
             <!-- <p>User ID: {{ userId }}</p> -->
+
+
+            
           </div>
         </v-row>
 
@@ -61,13 +64,13 @@
                 <v-icon @click="viewRequisition(item)" color="info" title="View Requisition">
                   mdi-eye-check-outline
                 </v-icon>
-                <v-icon @click="OpenapproveRequisitionModal(item)" color="success" title="Approve Requisition">
+                <v-icon  v-if="roles.includes('admin')" @click="OpenapproveRequisitionModal(item)" color="success" title="Approve Requisition">
                   mdi-thumb-up-outline
                 </v-icon>
-                <v-icon @click="OpencancelRequisitionModal(item)" color="error" title="Reject Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="OpencancelRequisitionModal(item)" color="error" title="Reject Requisition">
                   mdi-close-circle
                 </v-icon>
-                <v-icon @click="deleteRequisition(item)" color="error" title="Delete Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="deleteRequisition(item)" color="error" title="Delete Requisition">
                   mdi-delete
                 </v-icon>
 
@@ -80,46 +83,46 @@
         <!-- requisition history -->
 
         <v-dialog v-model="logsModal" max-width="700px" full-height top>
-  <v-card class="elevation-10">
-    <v-card-title class="headline">
-      <v-icon color="primary">mdi-history</v-icon>
-      Requisition Logs
-    </v-card-title>
-    <v-divider></v-divider>
-    <v-card-text>
-      <!-- Loading Indicator -->
-      <v-progress-circular v-if="loadingLogs" indeterminate color="primary" />
-      
-      <!-- Logs List -->
-      <v-list dense v-else>
-        <v-list-item-group>
-          <v-list-item v-for="(log, index) in logs" :key="index">
-            <v-list-item-content>
-              <v-list-item-title class="mb-3">
-                <v-icon color="secondary" class="mr-1">mdi-account-circle</v-icon>
-                <strong>User:</strong> {{ log.user }}
-              </v-list-item-title>
-              <v-list-item-title class="mb-3">
-                <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
-                <strong>Action:</strong> {{ log.action }}
-              </v-list-item-title>
-              <v-list-item-subtitle>
-                <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
-                <strong>Time:</strong> {{ log.time }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-card-text>
-    <v-divider></v-divider>
-    <v-card-actions>
-      <v-btn color="primary" @click="closelogsModal" outlined>
-        <v-icon left>mdi-close-circle-outline</v-icon> Close
-      </v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
+          <v-card class="elevation-10">
+            <v-card-title class="headline">
+              <v-icon color="primary">mdi-history</v-icon>
+              Requisition Logs
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text>
+              <!-- Loading Indicator -->
+              <v-progress-circular v-if="loadingLogs" indeterminate color="primary" />
+
+              <!-- Logs List -->
+              <v-list dense v-else>
+                <v-list-item-group>
+                  <v-list-item v-for="(log, index) in logs" :key="index">
+                    <v-list-item-content>
+                      <v-list-item-title class="mb-3">
+                        <v-icon color="secondary" class="mr-1">mdi-account-circle</v-icon>
+                        <strong>User:</strong> {{ log.user }}
+                      </v-list-item-title>
+                      <v-list-item-title class="mb-3">
+                        <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
+                        <strong>Action:</strong> {{ log.action }}
+                      </v-list-item-title>
+                      <v-list-item-subtitle>
+                        <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
+                        <strong>Time:</strong> {{ log.time }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-btn color="primary" @click="closelogsModal" outlined>
+                <v-icon left>mdi-close-circle-outline</v-icon> Close
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
 
 
@@ -244,19 +247,20 @@
       </v-main>
     </v-layout>
   </v-container>
+  
 </template>
 
 <script>
 export default {
 
-  props: {
-        props: {
-        user: Object,
-        roles: Array,
-        permissions: Array
+  
+    props: {
+      user: Object,
+      roles: Array,
+      permissions: Array
     },
 
-  },
+
   data() {
     return {
 
@@ -282,7 +286,7 @@ export default {
       approveRequisitionModal: false,
       cancelRequisitionModal: false,
       logsModal: false,
-      loadingLogs: false, 
+      loadingLogs: false,
 
       // requisitionItems: [],
 
@@ -316,56 +320,56 @@ export default {
   methods: {
 
     viewRequisition(item) {
-  const requisitionId = item.id;
-  const pdfUrl = `/api/v1/requisitions/${requisitionId}/pdf`;
-  window.open(pdfUrl, '_blank');
-},
+      const requisitionId = item.id;
+      const pdfUrl = `/api/v1/requisitions/${requisitionId}/pdf`;
+      window.open(pdfUrl, '_blank');
+    },
 
 
 
     capitalizeEachWord(text) {
-    if (!text) return '';
-    return text
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  },
-  // safeParseDetails(details) {
-  //   try {
-  //     // Attempt to parse the details if it's valid JSON
-  //     return JSON.parse(details);
-  //   } catch (e) {
-  //     console.warn('Error parsing details:', e.message, 'Details:', details);
-  //     // Return the details as a string if parsing fails
-  //     return { rawDetails: details };
-  //   }
-  // },
+      if (!text) return '';
+      return text
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    },
+    // safeParseDetails(details) {
+    //   try {
+    //     // Attempt to parse the details if it's valid JSON
+    //     return JSON.parse(details);
+    //   } catch (e) {
+    //     console.warn('Error parsing details:', e.message, 'Details:', details);
+    //     // Return the details as a string if parsing fails
+    //     return { rawDetails: details };
+    //   }
+    // },
 
-  closelogsModal(){
-    this.logsModal = false
+    closelogsModal() {
+      this.logsModal = false
 
-  },
+    },
 
     openLogsModal(requisitionId) {
-    this.logsModal = true; // Open the modal
-    this.logs = []; // Clear existing logs
-    this.loadingLogs = true; // Set loading state
+      this.logsModal = true; // Open the modal
+      this.logs = []; // Clear existing logs
+      this.loadingLogs = true; // Set loading state
 
-    axios
-      .get(`/api/v1/requisitions-logs/${requisitionId.id}`)
-      .then((response) => {
-        this.logs = response.data.logs; // Update logs
-      })
-      .catch((error) => {
-        console.error("Error fetching logs:", error.response?.data || error.message);
-        this.$toastr.error(
-          error.response?.data?.error || "Failed to fetch logs. Please try again."
-        );
-      })
-      .finally(() => {
-        this.loadingLogs = false; // Remove loading state
-      });
-  },
+      axios
+        .get(`/api/v1/requisitions-logs/${requisitionId.id}`)
+        .then((response) => {
+          this.logs = response.data.logs; // Update logs
+        })
+        .catch((error) => {
+          console.error("Error fetching logs:", error.response?.data || error.message);
+          this.$toastr.error(
+            error.response?.data?.error || "Failed to fetch logs. Please try again."
+          );
+        })
+        .finally(() => {
+          this.loadingLogs = false; // Remove loading state
+        });
+    },
 
     cancelRequisitionAction() {
       // Debug: Log the selected requisition and comment
@@ -460,7 +464,7 @@ export default {
       // Prepare the approval data
       const approvalData = {
         requisition_id: selectedRequisition.id,
-        user_id: this.userId,
+        user_id: this.user.id,
         comment: this.comment,
       };
       axios
@@ -526,7 +530,7 @@ export default {
           unit_cost: item.unit_cost,
           total_cost: item.total_cost, // Use the dynamically updated value
         })),
-        user_id: this.userId,
+        user_id: this.user.id,
         special_instructions: this.specialInstructions,
 
       };
@@ -546,10 +550,16 @@ export default {
           this.fetchRequisitions(); // Fetch requisitions after saving
 
         })
+        // .catch((error) => {
+        //   console.error('Error saving requisition:', error.response?.data || error.message);
+        //   this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
+        // });
         .catch((error) => {
-          console.error('Error saving requisition:', error.response?.data || error.message);
-          this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
-        });
+  const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
+  console.error("Error saving requisition:", errorMessage, error.response?.data);
+  this.$toastr.error(errorMessage);
+});
+
     },
 
     openRequestModal() {
@@ -575,15 +585,15 @@ export default {
       this.fetchRequisitions();
     },
   },
-  async mounted() {
+  async created() {
 
- 
-        console.log("User:", this.user);
-        console.log("Roles:", this.roles);
-        console.log("Permissions:", this.permissions);
-     
-   
-  
+
+    console.log("User:", this.user);
+    console.log("Roles:", this.roles);
+    console.log("Permissions:", this.permissions);
+
+
+
     await this.fetchStats();
     await this.fetchRequisitions();
   },
