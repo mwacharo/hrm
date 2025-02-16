@@ -107,7 +107,7 @@
       </v-col>
       <v-divider></v-divider>
       <v-row justify="end" class="text-right">
-        
+
         <v-col cols="auto">
           <v-icon size="16" color="primary mx-1" @click.stop="drawer = !drawer" small>mdi-filter</v-icon>
           <v-btn @click="addAttendanceDialog = true" icon>
@@ -134,50 +134,79 @@
               </template>
 
               <template v-slot:item.clock_in_time="{ item }">
-               
-                  <span :style="{ color: item.status === 'In Time' ? 'green' : 'red' }">
-                    {{ item.clock_in_time ? item.clock_in_time : '00:00:00' }}
-                  </span>
-               
+
+                <span :style="{ color: item.status === 'In Time' ? 'green' : 'red' }">
+                  {{ item.clock_in_time ? item.clock_in_time : '00:00:00' }}
+                </span>
+
               </template>
 
               <template v-slot:item.status="{ item }">
-               
-                  <span :style="{ color: item.status === 'In Time' ? 'green' : 'red' }">
-                    <v-icon left class="mr-2">
-                      {{ item.status === 'In Time' ? 'mdi-clock-check-outline' : 'mdi-clock-alert-outline' }}
-                    </v-icon>
-                    {{ item.status }}
-                  </span>
-              
+
+                <span :style="{ color: item.status === 'In Time' ? 'green' : 'red' }">
+                  <v-icon left class="mr-2">
+                    {{ item.status === 'In Time' ? 'mdi-clock-check-outline' : 'mdi-clock-alert-outline' }}
+                  </v-icon>
+                  {{ item.status }}
+                </span>
+
               </template>
 
               <template v-slot:item.clock_out_time="{ item }">
-               
-                  <span :style="{ color: item.clock_out_time ? 'green' : 'red' }">
-                    {{ item.clock_out_time ? item.clock_out_time : '00:00' }}
-                  </span>
-              
+
+                <span :style="{ color: item.clock_out_time ? 'green' : 'red' }">
+                  {{ item.clock_out_time ? item.clock_out_time : '00:00' }}
+                </span>
+
               </template>
 
               <template v-slot:item.actions="{ item }">
-               
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-icon @click="viewAttendance(item)" class="mx-1" title="View Attendance" color="black"
-                        v-on="on">
-                        mdi-information
-                      </v-icon>
-                    </template>
-                    <span>View Attendance</span>
-                  </v-tooltip>
-               
+
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-icon @click="viewAttendance(item)" class="mx-1" title="View Attendance" color="black" v-on="on">
+                      mdi-information
+                    </v-icon>
+
+                    <!-- 
+                    <v-icon @click="deleteAttendance(item)" class="mx-1" title="Delete Attendance" color="red"
+                      v-on="on">
+                      mdi-delete
+                    </v-icon> -->
+
+                    <v-icon @click="confirmDelete(item)" class="mx-1" title="Delete Attendance" color="red">
+                      mdi-delete
+                    </v-icon>
+
+                  </template>
+                  <span>View Attendance</span>
+                </v-tooltip>
+
               </template>
             </v-data-table>
 
           </v-responsive>
         </v-col>
       </v-row>
+
+
+
+
+      <!-- Delete Confirmation Modal -->
+      <v-dialog v-model="deleteDialog" max-width="400">
+        <v-card>
+          <v-card-title class="headline">Confirm Deletion</v-card-title>
+          <v-card-text>
+            Are you sure you want to delete this attendance record?
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="deleteDialog = false" color="grey">Cancel</v-btn>
+            <v-btn @click="deleteAttendance" color="red">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <v-dialog v-model="addAttendanceDialog" max-width="500">
         <v-card prepend-icon="mdi-update" title="Add Attendance">
           <v-card-text>
@@ -282,6 +311,7 @@
 export default {
   data() {
     return {
+      deleteDialog: false,
       drawer: null,
       selected: [],
       base_url: '/',
@@ -362,6 +392,33 @@ export default {
   },
 
   methods: {
+
+
+    // Open the delete confirmation modal
+    confirmDelete(item) {
+      this.selectedAttendance = item;
+      this.deleteDialog = true;
+    },
+
+    // Delete the attendance after confirmation
+    async deleteAttendance() {
+      if (!this.selectedAttendance) return;
+
+      try {
+        await axios.delete(`/api/v1/attendances/${this.selectedAttendance.id}`);
+        this.$toastr.success("Attendance deleted successfully!");
+
+        // Refresh attendance list after deletion
+        this.fetchAttendances();
+      } catch (error) {
+        console.error("Error deleting attendance:", error);
+        this.$toastr.error("Failed to delete attendance.");
+      } finally {
+        // Close the modal
+        this.deleteDialog = false;
+        this.selectedAttendance = null;
+      }
+    },
     async fetchEmployees() {
       const apiUrl = this.base_url + 'api/v1/users';
 
