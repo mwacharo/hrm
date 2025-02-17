@@ -169,6 +169,9 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('v1/attendance-report/excel', [ReportApiController::class, 'attendanceExcelReport']);
   Route::post('v1/leave-report/excel', [ReportApiController::class, 'leaveExcelReport']);
   Route::get('v1/agent-performance', [EmployeesPerformance::class, 'agentPerformance']);
+  Route::get('v1/asset-report', [ReportApiController::class, 'assetReport']);
+  // Route::post('v1/asset-report', [ReportApiController::class, 'assetReport']);
+
 
   //Awards
   Route::get('v1/awards', [AwardApiController::class, 'index']);

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\AssetReportExport;
 use App\Exports\AttendanceExport;
 use App\Exports\LeaveExport;
 use App\Http\Controllers\Controller;
+use App\Models\Asset;
 use App\Models\Attendance;
 use App\Models\Leave;
 use Illuminate\Http\Request;
@@ -152,5 +154,23 @@ class ReportApiController extends Controller
         return Excel::download(new LeaveExport($leaves), 'leave_report.xlsx');
 
     }
+
+    // public function  assetReport(){
+
+
+    //     $reportdata =Asset::all();
+
+    //     return response()->json($reportdata);
+
+    // }
+
+
+    public function assetReport()
+    {
+        return Excel::download(new AssetReportExport, 'asset_report.xlsx');
+    }
 }
+
+
+
 

@@ -20,6 +20,7 @@ class Asset extends Model
         'condition',
         'warranty',
         'purchase_cost',
+        'purchase_date',
         'issued_to',
         'issued_by',
         'repair_cost',

@@ -524,10 +524,27 @@ export default {
         refreshResources() {
             this.fetchResources();
         },
-        downloadReport() {
-            // Method to download resources report
-            // Implement based on your backend functionality
-        },
+       
+        async downloadReport() {
+      try {
+        const response = await axios.get("/api/v1/asset-report", {
+          responseType: "blob", 
+        });
+
+        // Create a blob from the response data
+        const blob = new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+        // Create a temporary download link
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "asset_report.xlsx";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("Error downloading Excel:", error);
+      }
+    },
         openFilterDialog() {
             this.drawer = true;
         },
