@@ -13,6 +13,7 @@
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.2",
         "maatwebsite/excel": "^3.1",
+        "octopyid/laravel-impersonate": "^4",
         "pusher/pusher-push-notifications": "^2.0",
         "spatie/laravel-permission": "*",
         "spatie/laravel-settings": "^3.2",

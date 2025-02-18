@@ -38,6 +38,7 @@ use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\UserController;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -141,6 +142,24 @@ Route::group(['middleware' => ['auth']], function () {
     // requestions
     Route::get('/requisitions', [RequisitionController::class, 'index']);
     Route::get('/resources', [ResourceController::class, 'index']);
+
+    // impersonate 
+    Route::get('/impersonate/{id}', function ($id) {
+        $user = auth()->user();
+        $target = User::findOrFail($id);
+        
+        if ($user->canImpersonate($target)) {
+            $user->impersonate($target);
+            return redirect('/dashboard'); 
+        }
+
+        return abort(403);
+    })->name('impersonate.start');
+
+    Route::get('/impersonate/leave', function () {
+        auth()->user()->leaveImpersonation();
+        return redirect('/dashboard'); 
+    })->name('impersonate.leave');
 
 
 });

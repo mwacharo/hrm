@@ -2,7 +2,8 @@
   <v-container-fluid>
     <v-row justify="end" class="text-right">
       <v-col>
-        <v-text-field prepend-icon="mdi-magnify" variant="underlined" v-model="search" label="Search" clearable @clear="clearSearch"></v-text-field>
+        <v-text-field prepend-icon="mdi-magnify" variant="underlined" v-model="search" label="Search" clearable
+          @clear="clearSearch"></v-text-field>
       </v-col>
       <v-col cols="auto">
         <v-icon @click="addUserModal = true" color="warning" x-small>mdi-account-plus</v-icon>
@@ -55,6 +56,10 @@
             <v-icon @click="openRoleSwitchModal(item)" icon title="Switch Role" color="orange">mdi-account-switch
             </v-icon>
             <v-icon @click="deleteUser(item)" title="Delete" class="mx-2 text-danger">mdi-delete
+            </v-icon>
+
+            <v-icon @click="impersonateUser(item)" title="Impersonate User"  color="purple">
+              mdi-account
             </v-icon>
           </template>
         </v-data-table>
@@ -438,6 +443,47 @@ export default {
     this.fetchRoles();
   },
   methods: {
+
+
+   
+  //   impersonateUser(user) {
+
+  //     user.id =filter(this.users where user_id == user.id)
+
+  //   if (user.impersonate_url) {
+  //     window.location.href = user.impersonate_url;
+  //   } else {
+  //     console.error('Impersonation URL not available for this user.');
+  //     // Optionally, display a user-friendly message
+  //     this.$toastr.error('Impersonation URL is missing. Please contact support.');
+  //   }
+  // },
+
+
+   impersonateUser(user) {
+  // Validate the user object and its ID
+  if (!user || !user.id) {
+    console.error('Invalid user object or missing user ID.');
+    this.$toastr.error('User information is incomplete. Please contact support.');
+    return;
+  }
+
+  // Attempt to retrieve or construct the impersonation URL
+  let impersonateUrl = user.impersonate_url;
+  if (!impersonateUrl) {
+    // Construct the URL based on the user's ID, adjust the URL pattern as needed
+    impersonateUrl = `/impersonate/${user.id}`;
+  }
+
+  // Redirect to the impersonation URL
+  if (impersonateUrl) {
+    window.location.href = impersonateUrl;
+  } else {
+    console.error('Impersonation URL could not be determined.');
+    this.$toastr.error('Unable to determine impersonation URL. Please contact support.');
+  }
+}
+,
 
     formatPermissionName(name) {
       return name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());

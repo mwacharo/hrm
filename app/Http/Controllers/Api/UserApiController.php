@@ -14,27 +14,59 @@ use Illuminate\Support\Str;
 class UserApiController extends Controller
 {
 
+  // public function index(Request $request)
+  // {
+  //   $departmentId = $request->query('department_id');
+
+  //   $query = User::with('department', 'unit', 'office', 'designation', 'roles')
+  //     ->orderBy('created_at');
+
+  //   if ($departmentId) {
+  //     $query->where('department_id', $departmentId);
+  //   }
+
+  //   $users = $query->get();
+
+  //   foreach ($users as $user) {
+  //     $userRoles = $user->roles->pluck('name')->toArray();
+  //     $primaryRole = !empty($userRoles) ? $userRoles[0] : '';
+  //     $user->setAttribute('role', $primaryRole);
+  //   }
+
+  //   return response()->json(['users' => $users]);
+  // }
+
+
+
+
   public function index(Request $request)
-  {
+{
     $departmentId = $request->query('department_id');
 
     $query = User::with('department', 'unit', 'office', 'designation', 'roles')
-      ->orderBy('created_at');
+        ->orderBy('created_at');
 
     if ($departmentId) {
-      $query->where('department_id', $departmentId);
+        $query->where('department_id', $departmentId);
     }
 
     $users = $query->get();
 
     foreach ($users as $user) {
-      $userRoles = $user->roles->pluck('name')->toArray();
-      $primaryRole = !empty($userRoles) ? $userRoles[0] : '';
-      $user->setAttribute('role', $primaryRole);
+        $userRoles = $user->roles->pluck('name')->toArray();
+        $primaryRole = !empty($userRoles) ? $userRoles[0] : '';
+        $user->setAttribute('role', $primaryRole);
+
+        // Append the impersonate URL
+        if (auth()->user()->canImpersonate($user)) {
+            $user->setAttribute('impersonate_url', route('impersonate.start', ['id' => $user->id]));
+        } else {
+            $user->setAttribute('impersonate_url', null);
+        }
     }
 
     return response()->json(['users' => $users]);
-  }
+}
 
   public function show(User $user)
   {
