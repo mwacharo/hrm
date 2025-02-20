@@ -5,16 +5,16 @@
                 <v-card-title>Filter Leave Balances</v-card-title>
                 <v-card-text>
                     <v-col class="mt-lg-5">
-                        <v-autocomplete v-model="filterOptions.user_ids" :items="users" label="Employee" variant="outlined"
-                            item-title="fullname" item-value="id" multiple clearable />
+                        <v-autocomplete v-model="filterOptions.user_ids" :items="users" label="Employee"
+                            variant="outlined" item-title="fullname" item-value="id" multiple clearable />
                     </v-col>
                     <v-col>
                         <v-select v-model="filterOptions.leave_type_ids" :items="leaveTypes" label="Leave Type"
                             variant="outlined" multiple item-title="name" item-value="id" clearable />
                     </v-col>
                     <v-col>
-                        <v-select v-model="filterOptions.country_ids" :items="countries" label="Country" variant="outlined"
-                            multiple item-title="name" item-value="id" clearable />
+                        <v-select v-model="filterOptions.country_ids" :items="countries" label="Country"
+                            variant="outlined" multiple item-title="name" item-value="id" clearable />
                     </v-col>
                     <v-col class="d-flex justify-end">
                         <v-btn color="dark" @click="filterBalances">
@@ -52,15 +52,14 @@
                     {{ item.leave_type.name.replace('_', ' ') }}
                 </template>
                 <template v-slot:item.actions="{ item }">
-                   
-                        <v-icon @click="viewLeaveHistory(item)" color="info" class="mx-2" title="View Leave">mdi-history
-                        </v-icon>
-                        <v-icon @click="editLeaveBalance(item)" color="primary" class="mx-2"
-                            title="Edit Leave">mdi-pencil
-                        </v-icon>
-                        <v-icon @click="deleteLeaveBalance(item)" color="danger" class="mx-2"
-                            title="Delete Leave">mdi-delete
-                        </v-icon>
+
+                    <v-icon @click="viewLeaveHistory(item)" color="info" class="mx-2" title="View Leave">mdi-history
+                    </v-icon>
+                    <v-icon @click="editLeaveBalance(item)" color="primary" class="mx-2" title="Edit Leave">mdi-pencil
+                    </v-icon>
+                    <v-icon @click="deleteLeaveBalance(item)" color="danger" class="mx-2"
+                        title="Delete Leave">mdi-delete
+                    </v-icon>
                 </template>
             </v-data-table>
 
@@ -100,7 +99,9 @@ export default {
             leaveBalances: [],
             countries: [],
             headers: [
-                { title: 'Employee', value: 'user', sortable: true },
+                // { title: 'Employee', value: 'user', sortable: true },
+                { title: "Employee Name", value: "fullname" },
+
                 { title: 'Leave Type', value: 'leave_type', sortable: true },
                 { title: 'Allocated Days', value: 'allocated', sortable: true },
                 { title: 'Leave Taken', value: 'taken', sortable: true },
@@ -135,7 +136,10 @@ export default {
         this.fetchLeaveTypes();
         this.fetchUnits();
     },
+
     methods: {
+
+
         async apiCall(url, method = 'get', data = null) {
             try {
                 this.loading = true;
@@ -147,9 +151,15 @@ export default {
                 console.error(error);
             }
         },
+
         async fetchLeaveBalances() {
-            this.leaveBalances = (await this.apiCall(this.base_url + 'api/v1/leave-balances')).leaveBalances;
-        },
+            const response = await this.apiCall(this.base_url + 'api/v1/leave-balances');
+            this.leaveBalances = response.leaveBalances.map(item => ({
+                ...item,
+                fullname: item.user ? `${item.user.firstname} ${item.user.lastname}` : "Unknown" // Handle null user
+            }));
+        }
+        ,
         async fetchUsers() {
             const { users } = await this.apiCall(this.base_url + 'api/v1/users');
             this.users = users.map(user => ({

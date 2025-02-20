@@ -77,38 +77,87 @@ class ResourceApiController extends Controller
         }
     }
 
-    public function update(Request $request, Asset $asset)
-    {
-        $rules = [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'required|string|in:Hardware,Software,Stationery,Furniture,Electronics',
-            'purchase_date' => 'nullable|date',
-            'office_id' => 'nullable|exists:offices,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'serial_no' => 'required|string|max:50|unique:assets,serial_no,' . $asset->id,
-            'condition' => 'nullable|string|max:255',
-            'warranty' => 'nullable|string|max:255',
-            'purchase_cost' => 'nullable|numeric|min:0',
-            'issued_by' => 'nullable|exists:users,issued_by',
-            'issued_to' => 'nullable|exists:users,issued_to'
-        ];
+    // public function update(Request $request, Asset $asset)
+    // {
 
-        $validatedData = $request->validate($rules);
+    //     return 0;
+    //     $rules = [
+    //         'name' => 'required|string|max:255',
+    //         'description' => 'nullable|string',
+    //         'category' => 'required|string|in:Hardware,Software,Stationery,Furniture,Electronics',
+    //         'purchase_date' => 'nullable|date',
+    //         'office_id' => 'nullable|exists:offices,id',
+    //         'department_id' => 'nullable|exists:departments,id',
+    //         'serial_no' => 'required|string|max:50|unique:assets,serial_no,' . $asset->id,
+    //         'condition' => 'nullable|string|max:255',
+    //         'warranty' => 'nullable|string|max:255',
+    //         'purchase_cost' => 'nullable|numeric|min:0',
+    //         'issued_by' => 'nullable|exists:users,issued_by',
+    //         'issued_to' => 'nullable|exists:users,issued_to'
+    //     ];
 
-        if ($request->has('issued_to')) {
-            $validatedData['is_assigned'] = true;
-            $validatedData['issued_by'] = auth()->user()->id;
-        } else {
-            $validatedData['is_assigned'] = false;
-        }
+    //     $validatedData = $request->validate($rules);
 
-        $validatedData['issued_by'] = auth()->user()->id;
 
-        $asset->update($validatedData);
+    // //   return response()->json($validatedData);
+        
+    //     if ($request->has('issued_to')) {
+    //         $validatedData['is_assigned'] = true;
+    //         $validatedData['issued_by'] = auth()->user()->id;
+    //     } else {
+    //         $validatedData['is_assigned'] = false;
+    //     }
 
-        return response()->json(['message' => 'Asset updated successfully', 'asset' => $asset], 200);
+    //     $validatedData['issued_by'] = auth()->user()->id;
+
+    //     $asset->update($validatedData);
+
+    //     return response()->json(['message' => 'Asset updated successfully', 'asset' => $asset], 200);
+    // }
+
+
+public function update(Request $request, Asset $asset)
+{
+    Log::info('Update request received for asset ID: ' . $asset->id, ['request_data' => $request->all()]);
+
+    $rules = [
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'category' => 'required|string|in:Hardware,Software,Stationery,Furniture,Electronics',
+        'purchase_date' => 'nullable|date',
+        'office_id' => 'nullable|exists:offices,id',
+        'department_id' => 'nullable|exists:departments,id',
+        'serial_no' => 'required|string|max:50|unique:assets,serial_no,' . $asset->id,
+        'condition' => 'nullable|string|max:255',
+        'warranty' => 'nullable|string|max:255',
+        'purchase_cost' => 'nullable|numeric|min:0',
+        'issued_by' => 'nullable|exists:users,id',
+        'issued_to' => 'nullable|exists:users,id'
+    ];
+
+    $validatedData = $request->validate($rules);
+    Log::info('Validation successful', ['validated_data' => $validatedData]);
+
+    if ($request->has('issued_to')) {
+        $validatedData['is_assigned'] = true;
+        $validatedData['issued_by'] = auth()->id();
+    } else {
+        $validatedData['is_assigned'] = false;
     }
+
+    $validatedData['issued_by'] = auth()->id();
+
+    try {
+        $asset->update($validatedData);
+        Log::info('Asset updated successfully', ['updated_asset' => $asset]);
+    } catch (\Exception $e) {
+        Log::error('Error updating asset', ['error' => $e->getMessage()]);
+        return response()->json(['message' => 'Failed to update asset'], 500);
+    }
+
+    return response()->json(['message' => 'Asset updated successfully', 'asset' => $asset], 200);
+}
+
 
     public function destroy(Asset $asset)
     {

@@ -35,10 +35,10 @@ class LeaveApiController extends Controller
 
 
 
-if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
-  $userIds = collect($request->input('user_ids'))->flatten()->toArray();
-  $query->whereIn('user_id', $userIds);
-}
+    if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
+      $userIds = collect($request->input('user_ids'))->flatten()->toArray();
+      $query->whereIn('user_id', $userIds);
+    }
 
     if ($request->has('unit_ids') && is_array($request->input('unit_ids'))) {
 
@@ -307,7 +307,7 @@ if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
         'userId' => $request->input('userId'),
         'leaveId' => $leave->id,
         'requestData' => $request->all()
-    ]);
+      ]);
 
       $userId = $request->input('userId');
       $approver = User::find($userId);

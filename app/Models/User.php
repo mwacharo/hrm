@@ -14,9 +14,9 @@ use Octopy\Impersonate\Concerns\HasImpersonation;
 
 
 
-class User extends Authenticatable 
+class User extends Authenticatable
 {
-  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions,HasPermissions, HasImpersonation; 
+  use HasApiTokens, SoftDeletes, Notifiable, HasRoles, HasPermissions, HasPermissions, HasImpersonation;
 
 
   /**
@@ -156,41 +156,35 @@ class User extends Authenticatable
     return $this->hasMany(ActivityLog::class);
   }
 
+  /**
+   * Get the display text for impersonation.
+   *
+   * @return string
+   */
+  public function getImpersonateDisplayText(): string
+  {
+    return $this->firstname; // Adjust this to the attribute you want to display
+  }
 
+  /**
+   * Get the fields used for impersonation search.
+   *
+   * @return array
+   */
+  public function getImpersonateSearchField(): array
+  {
+    return ['name', 'email']; // Adjust these fields as needed
+  }
 
-
-    /**
-     * Get the display text for impersonation.
-     *
-     * @return string
-     */
-    public function getImpersonateDisplayText(): string
-    {
-        return $this->firstname; // Adjust this to the attribute you want to display
-    }
-
-    /**
-     * Get the fields used for impersonation search.
-     *
-     * @return array
-     */
-    public function getImpersonateSearchField(): array
-    {
-        return ['name', 'email']; // Adjust these fields as needed
-    }
-
-
-    public function canImpersonate($target): bool
-{
+  public function canImpersonate($target): bool
+  {
     // Define logic to determine if the user can impersonate the target
     return $this->hasRole('admin'); // Example condition
-}
+  }
 
-public function canBeImpersonated(): bool
-{
+  public function canBeImpersonated(): bool
+  {
     // Define logic to determine if the user can be impersonated
     return !$this->hasRole('admin'); // Example condition
-}
-
-
+  }
 }

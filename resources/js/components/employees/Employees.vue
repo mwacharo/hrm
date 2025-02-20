@@ -3,7 +3,7 @@
     <v-row justify="end" class="text-right">
       <v-col>
         <v-text-field prepend-icon="mdi-magnify" variant="underlined" v-model="search" label="Search" clearable
-          @clear="clearSearch"></v-text-field>
+         @clear="clearSearch"></v-text-field>
       </v-col>
       <v-col cols="auto">
         <v-icon @click="addUserModal = true" color="warning" x-small>mdi-account-plus</v-icon>

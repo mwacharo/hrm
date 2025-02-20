@@ -32,13 +32,13 @@
             <v-col>
                 <v-row justify="end" class="text-right">
                     <v-col cols="auto">
-                        <v-btn  v-if="roles.includes('admin')" @click="addResource" icon>
+                        <v-btn v-if="roles.includes('admin')" @click="addResource" icon>
                             <v-tooltip activator="parent" location="top">Add Resource</v-tooltip>
                             <v-icon color="primary">mdi-plus</v-icon>
                         </v-btn>
                     </v-col>
                     <v-col cols="auto" v-if="resources.length > 0">
-                        <v-btn  v-if="roles.includes('admin')" @click="openFilterDialog" icon>
+                        <v-btn v-if="roles.includes('admin')" @click="openFilterDialog" icon>
                             <v-tooltip activator="parent" location="top">Filter Resource</v-tooltip>
                             <v-icon color="primary" x-small>mdi-filter</v-icon>
                         </v-btn>
@@ -89,19 +89,22 @@
                     </template>
 
                     <template v-slot:item.actions="{ item }">
-                        <td   class="d-flex justify-content-around align-items-center">
+                        <td class="d-flex justify-content-around align-items-center">
                             <!-- Edit User -->
-                            <v-icon  v-if="roles.includes('admin')" @click="editResource(item)" title="Edit User" color="primary">
+                            <v-icon v-if="roles.includes('admin')" @click="editResource(item)" title="Edit User"
+                                color="primary">
                                 mdi-pencil
                             </v-icon>
 
                             <!-- Issue to a User -->
-                            <v-icon v-if="roles.includes('admin')" @click="openAssignUserModal(item)" title="Issue to a user" color="orange">
+                            <v-icon v-if="roles.includes('admin')" @click="openAssignUserModal(item)"
+                                title="Issue to a user" color="orange">
                                 mdi-account-arrow-right
                             </v-icon>
 
                             <!-- Schedule Maintenance -->
-                            <v-icon  v-if="roles.includes('admin')" @click="scheduleMaintence(item)" title="Schedule Maintenance" color="blue">
+                            <v-icon v-if="roles.includes('admin')" @click="scheduleMaintence(item)"
+                                title="Schedule Maintenance" color="blue">
                                 mdi-calendar-clock
                             </v-icon>
 
@@ -111,7 +114,8 @@
                             </v-icon>
 
                             <!-- Delete Resource -->
-                            <v-icon v-if="roles.includes('admin')" @click="deleteResource(item)" title="Delete" color="red">
+                            <v-icon v-if="roles.includes('admin')" @click="deleteResource(item)" title="Delete"
+                                color="red">
                                 mdi-delete
                             </v-icon>
                         </td>
@@ -164,7 +168,7 @@
                                 </v-col>
 
                                 <v-col cols="12" sm="6">
-                                    <v-select :items="users" item-title="fullName" item-value="id"
+                                    <v-select :items="users" item-title="fullName" item-value="id" search-input
                                         v-model="formData.issued_to" label="Assign to Employee">
                                     </v-select>
 
@@ -196,13 +200,11 @@
             <v-card>
                 <v-card-title>Assign Employee</v-card-title>
                 <v-card-text>
-                    <v-select v-model="selectedUser" :items="users" label="Employee" item-value="id" 
+            
 
-
-                    item-text="fullName"
-                       variant="outlined">
-                    </v-select> 
-  
+                    <v-select :items="users" item-title="fullName" item-value="id" search-input
+                        v-model="formData.issued_to" label="Assign to Employee">
+                    </v-select>
 
 
                 </v-card-text>
@@ -252,11 +254,11 @@
 </template>
 <script>
 export default {
-        props: {
+    props: {
         user: Object,
         roles: Array,
         permissions: Array
- 
+
     },
     data() {
         return {
@@ -265,7 +267,7 @@ export default {
             users: [],
             loading: false,
             assignUserModal: false,
-            selected:this.User  ,
+            selected: this.User,
             dialog: false,
             drawer: false,
             assets: {
@@ -304,6 +306,8 @@ export default {
                 { title: 'Issued To', value: 'issued_to' },
                 { title: 'Issued By', value: 'issued_by' },
                 { title: 'Condition', value: 'condition' },
+                { title: 'Comment', value: 'comment' },
+
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
         };
@@ -322,7 +326,7 @@ export default {
         this.fetchResources();
         this.fetchUsers();
 
-   
+
     },
     methods: {
 
@@ -370,18 +374,18 @@ export default {
         },
         fetchUsers() {
 
-            console.log('Fetching users from the API...'); 
+            console.log('Fetching users from the API...');
 
 
             axios.get('/api/v1/users')
 
                 .then(response => {
 
-                    console.log('API response received:', response); 
+                    console.log('API response received:', response);
 
                     if (response.data && response.data.users) {
 
-                        console.log('Users data found:', response.data.users); 
+                        console.log('Users data found:', response.data.users);
 
                         this.users = response.data.users.map(user => ({
 
@@ -396,7 +400,7 @@ export default {
 
                     } else {
 
-                        console.warn('No users found in the response.'); 
+                        console.warn('No users found in the response.');
 
                     }
 
@@ -443,7 +447,7 @@ export default {
                 serial_no: resource.serial_no,
                 category: resource.category,
                 issued_to: resource.issued_to,
-                issued_by: resource.issued_by,
+                issued_by: resource.issued_by.id,
                 condition: resource.condition,
                 description: resource.description,
                 issuance_date: resource.issuance_date,
@@ -524,27 +528,27 @@ export default {
         refreshResources() {
             this.fetchResources();
         },
-       
+
         async downloadReport() {
-      try {
-        const response = await axios.get("/api/v1/asset-report", {
-          responseType: "blob", 
-        });
+            try {
+                const response = await axios.get("/api/v1/asset-report", {
+                    responseType: "blob",
+                });
 
-        // Create a blob from the response data
-        const blob = new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+                // Create a blob from the response data
+                const blob = new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
-        // Create a temporary download link
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "asset_report.xlsx";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (error) {
-        console.error("Error downloading Excel:", error);
-      }
-    },
+                // Create a temporary download link
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "asset_report.xlsx";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("Error downloading Excel:", error);
+            }
+        },
         openFilterDialog() {
             this.drawer = true;
         },
@@ -552,6 +556,9 @@ export default {
             // Method to view resource details
             // Implement based on your requirements
         },
+
+
+
     },
 
 };
