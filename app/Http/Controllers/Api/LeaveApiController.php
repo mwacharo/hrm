@@ -23,7 +23,7 @@ class LeaveApiController extends Controller
   public function index(Request $request)
   {
 
-    $query = Leave::with('leave_type', 'user')
+    $query = Leave::with('leave_type', 'user.department')
       ->whereHas('user', function ($query) {
         $query->whereNull('deleted_at');
       });

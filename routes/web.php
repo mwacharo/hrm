@@ -24,10 +24,12 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PerformanceController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequisitionController;
 use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TaskController;
@@ -109,7 +111,10 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/award-types', [PerformanceController::class, 'awardTypes']);
     Route::get('/appraisals', [PerformanceController::class, 'appraisals']);
     Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/roles', [RoleController::class, 'index']);
+    Route::get('/permissions', [PermissionController::class, 'index']);
 
+ 
 });
 
 // Employee routes

@@ -202,7 +202,7 @@
                 <v-card-text>
             
 
-                    <v-select :items="users" item-title="fullName" item-value="id" search-input
+                    <v-select :items="users" item-title="fullName" item-value="id" search-input clearable mutiple
                         v-model="formData.issued_to" label="Assign to Employee">
                     </v-select>
 

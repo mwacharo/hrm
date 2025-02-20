@@ -68,6 +68,9 @@ import Appraisals from './components/performance/Appraisals.vue'
 import Tickets from './components/tickets/Tickets.vue'
 import Complaints from './components/complaints/Complaints.vue'
 import Requisition from './components/requisitions/Requisition.vue'
+import Permissions from './components/permissions/Permissions.vue'
+import Roles from './components/roles/Roles.vue'
+
 
 
 
@@ -118,5 +121,8 @@ app.component('tickets', Tickets)
 app.component('complaints', Complaints)
 app.component('appraisals', Appraisals)
 app.component('requisition',Requisition)
+app.component('permissions',Permissions)
+app.component('roles',Roles)
+
 
 app.mount('#app')
