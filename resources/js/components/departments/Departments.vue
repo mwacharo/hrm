@@ -9,12 +9,20 @@
     </v-row>
 
     <v-data-table :headers="headers" :items="departments" item-value="id" class="elevation-1" dense>
-      
-      <template v-slot:[`item.index`]='{ index }'>
+
+      <!-- Index column -->
+      <template v-slot:[`item.index`]="{ index }">
         {{ index + 1 }}
       </template>
 
-      <template v-slot:[`item.actions`]='{ item }'>
+      <!-- HODs column -->
+      <template v-slot:[`item.hods_display`]="{ item }">
+        <span v-if="item.hods_display">{{ item.hods_display }}</span>
+        <span v-else>—</span> <!-- Display a dash if there are no HODs -->
+      </template>
+
+      <!-- Actions column -->
+      <template v-slot:[`item.actions`]="{ item }">
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
             <v-btn color="success" class="mx-2" v-bind="attrs" v-on="on" @click="openEditDepartmentDialog(item)">
@@ -35,7 +43,9 @@
           Delete {{ item.name }} department
         </v-tooltip>
       </template>
+
     </v-data-table>
+
 
     <!-- Add, Edit, and Confirm Delete Dialogs -->
     <v-dialog v-model="addDepartmentDialog" max-width="400px" persistent>
@@ -48,6 +58,14 @@
           <v-form ref="addDepartmentForm" @submit.prevent="addDepartment">
             <v-text-field v-model="newDepartment.name" label="Name" placeholder="Human Resource"
               required></v-text-field>
+
+
+            <select v-model="employee_id" class="select form-control">
+              <option value=''>Select HOD</option>
+              <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+                {{ employee.firstname }} {{ employee.lastname }}
+              </option>
+            </select>
           </v-form>
         </v-card-text>
         <v-card-actions class="justify-end">
@@ -72,6 +90,12 @@
         <v-card-text>
           <v-form ref="editDepartmentForm" @submit.prevent="updateDepartment">
             <v-text-field v-model="editDepartment.name" label="Department Name" required></v-text-field>
+            <select v-model="employee_id" class="select form-control">
+              <option value=''>Select Employee</option>
+              <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+                {{ employee.firstname }} {{ employee.lastname }}
+              </option>
+            </select>
           </v-form>
         </v-card-text>
         <v-card-actions class="justify-end">
@@ -117,6 +141,11 @@ export default {
         { title: '#', value: 'index' },
         { title: "Department Name", value: "name" },
         { title: "Employees", value: "employeeCount", align: "center" },
+        // { title: "Manager", value: "name.", align: "center" },
+
+        { title: "HOD", value: "hods_display", align: "center" },
+        
+
         { title: "Actions", value: "actions", sortable: false },
       ],
       base_url: "/",
@@ -128,6 +157,9 @@ export default {
         name: "",
       },
       departments: [],
+      employees: [], // Fix for missing employees variable
+      employee_id: '', // Add this
+
       addDepartmentDialog: false,
       editDepartmentDialog: false,
       confirmDeleteDialog: false,
@@ -136,8 +168,22 @@ export default {
   },
   created() {
     this.fetchDepartments();
+    this.fetchEmployees();
+
   },
   methods: {
+
+    fetchEmployees() {
+      axios
+        .get(this.base_url + "api/v1/users")
+        .then((response) => {
+          this.employees = response.data.users;
+          console.log("Fetched employees:", response.data.employees);
+        })
+        .catch((error) => {
+          console.error("Error fetching employees:", error);
+        });
+    },
     fetchDepartments() {
       const apiUrl = `${this.base_url}api/v1/departments`;
       axios
@@ -155,7 +201,11 @@ export default {
     addDepartment() {
       const apiUrl = `${this.base_url}api/v1/departments`;
       axios
-        .post(apiUrl, { name: this.newDepartment.name })
+        .post(apiUrl, { name: this.newDepartment.name 
+          ,hod_id: this.employee_id || null, // Ensure null if no HOD is selected
+        }
+          
+        )
         .then(() => {
           this.fetchDepartments();
           this.$toastr.success("Department added successfully!");
@@ -166,24 +216,38 @@ export default {
           console.error("Error adding department:", error);
         });
     },
+
+
     openEditDepartmentDialog(department) {
       this.editDepartmentDialog = true;
       this.editDepartment = { ...department };
-    },
+
+      // Set the first HOD's ID if available
+      this.employee_id = department.hods.length > 0 ? department.hods[0].id : '';
+    }
+    ,
+
+
     updateDepartment() {
-      const apiUrl = `${this.base_url}api/v1/departments/${this.editDepartment.id}`;
-      axios
-        .put(apiUrl, { name: this.editDepartment.name })
-        .then(() => {
-          this.fetchDepartments();
-          this.$toastr.success("Department updated successfully!");
-          this.closeEditDepartmentDialog();
-        })
-        .catch((error) => {
-          this.$toastr.error("Error updating department. Please try again.");
-          console.error("Error updating department:", error);
-        });
-    },
+  const apiUrl = `${this.base_url}api/v1/departments/${this.editDepartment.id}`;
+
+  axios
+    .put(apiUrl, {
+      name: this.editDepartment.name,
+      hod_id: this.employee_id || null, // Ensure null if no HOD is selected
+    })
+    .then(() => {
+      this.fetchDepartments();
+      this.$toastr.success("Department and HOD updated successfully!");
+      this.closeEditDepartmentDialog();
+    })
+    .catch((error) => {
+      this.$toastr.error("Error updating department. Please try again.");
+      console.error("Error updating department:", error);
+    });
+}
+
+    ,
     confirmDeleteDepartment(departmentId) {
       this.selectedDepartmentId = departmentId;
       this.confirmDeleteDialog = true;

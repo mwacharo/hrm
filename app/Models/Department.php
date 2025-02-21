@@ -17,4 +17,11 @@ class Department extends Model
     {
         return $this->hasMany(User::class);
     }
+
+
+    // Many-to-Many relationship for HODs
+    public function hods()
+    {
+        return $this->belongsToMany(User::class, 'hod_departments', 'department_id', 'user_id');
+    }
 }

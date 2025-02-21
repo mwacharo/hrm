@@ -127,6 +127,11 @@ class User extends Authenticatable
     return $this->belongsTo(Department::class);
   }
 
+  public function departments()
+  {
+      return $this->belongsToMany(Department::class, 'hod_departments');
+  }
+
   public function leaves()
   {
     return $this->hasMany(Leave::class);
@@ -187,4 +192,12 @@ class User extends Authenticatable
     // Define logic to determine if the user can be impersonated
     return !$this->hasRole('admin'); // Example condition
   }
+
+
+   // Many-to-Many relationship for HODs
+   public function hodDepartments()
+   {
+       return $this->belongsToMany(Department::class, 'hod_departments', 'user_id', 'department_id');
+   }
+
 }

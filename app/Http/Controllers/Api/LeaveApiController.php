@@ -28,6 +28,33 @@ class LeaveApiController extends Controller
         $query->whereNull('deleted_at');
       });
 
+
+
+      $user = auth()->user();
+      $unitId = $user->unit_id;
+      
+    
+    $isHod = $user->is_hod;
+    $isHr = $user->is_hr === 'HR'; // Assuming HR role check
+
+    // If the user is not HR or HOD, restrict leaves to their unit
+    if (!$isHod && !$isHr) {
+      $query->whereHas('user', function ($q) use ($unitId) {
+        $q->where('unit_id', $unitId);
+    });
+    
+    }
+
+    if ($user && $user->is_hod) {
+      // Get HOD's department IDs
+      $hodDepartmentIds = $user->departments?->pluck('id')->toArray() ?? [];
+
+      // Filter leaves to only include users within the HOD’s departments and HR Approved status
+      $query->whereHas('user', function ($query) use ($hodDepartmentIds) {
+        $query->whereIn('department_id', $hodDepartmentIds);
+      })->where('status', 'Hr Approved');
+    }
+
     // if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
     //   // dd($request->user_ids);
     //   $query->whereIn('user_id', $request->input('user_ids'));
@@ -71,7 +98,8 @@ class LeaveApiController extends Controller
       $query->whereIn('status', $request->input('statuses'));
     }
 
-    $leaves = $query->orderBy('created_at', 'desc')->get();
+    $leaves = $query
+    ->orderBy('created_at', 'desc')->get();
 
     $leaves = $leaves->map(function ($leave) {
       $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
@@ -173,16 +201,27 @@ class LeaveApiController extends Controller
   {
     $userId = $request->input('userId');
     $user = User::find($userId);
+
+    if (!$user) {
+      return response()->json(['error' => 'User not found'], 404);
+    }
+
     $departmentId = $user->department_id;
+    $unitId = $user->unit_id;
 
     $leaves = Leave::with(['user', 'leave_type'])
-      ->whereHas('user', function ($query) use ($departmentId) {
-        $query->where('department_id', $departmentId);
+      ->whereHas('user', function ($query) use ($departmentId, $unitId) {
+        $query->where('department_id', $departmentId)
+          ->where('unit_id', $unitId);
       })
+      ->orderByRaw("CASE WHEN status = 'pending' THEN 1 ELSE 2 END") // Prioritize 'pending' status
+
+      ->orderBy('created_at', 'desc')
       ->get();
 
     return response()->json(['leaves' => $leaves]);
   }
+
 
   public function store(Request $request)
   {
