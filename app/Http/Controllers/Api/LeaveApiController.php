@@ -17,97 +17,191 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 
+
 class LeaveApiController extends Controller
 {
 
-  public function index(Request $request)
-  {
+
+
+
+public function index(Request $request)
+{
+    Log::info('Fetching leave records', ['user_id' => auth()->id(), 'request_params' => $request->all()]);
 
     $query = Leave::with('leave_type', 'user.department')
-      ->whereHas('user', function ($query) {
-        $query->whereNull('deleted_at');
-      });
+        ->whereHas('user', function ($query) {
+            $query->whereNull('deleted_at');
+        });
 
-
-
-      $user = auth()->user();
-      $unitId = $user->unit_id;
-      
-    
+    $user = auth()->user();
+    $unitId = $user->unit_id;
     $isHod = $user->is_hod;
-    $isHr = $user->is_hr === 'HR'; // Assuming HR role check
+    $isHr = $user->is_hr; // Assuming HR role check
+
+    Log::info('User Role Check', ['isHod' => $isHod, 'isHr' => $isHr, 'unitId' => $unitId]);
 
     // If the user is not HR or HOD, restrict leaves to their unit
     if (!$isHod && !$isHr) {
-      $query->whereHas('user', function ($q) use ($unitId) {
-        $q->where('unit_id', $unitId);
-    });
-    
+        Log::info('User is NOT HOD/HR. Filtering leaves by unit', ['unit_id' => $unitId]);
+        $query->whereHas('user', function ($q) use ($unitId) {
+            $q->where('unit_id', $unitId);
+        });
     }
 
-    if ($user && $user->is_hod) {
-      // Get HOD's department IDs
-      $hodDepartmentIds = $user->departments?->pluck('id')->toArray() ?? [];
+    if ($isHod) {
+        $hodDepartmentIds = $user->departments?->pluck('id')->toArray() ?? [];
+        Log::info('HOD Access: Filtering leaves by department', ['hodDepartmentIds' => $hodDepartmentIds]);
 
-      // Filter leaves to only include users within the HOD’s departments and HR Approved status
-      $query->whereHas('user', function ($query) use ($hodDepartmentIds) {
-        $query->whereIn('department_id', $hodDepartmentIds);
-      })->where('status', 'Hr Approved');
+        $query->whereHas('user', function ($query) use ($hodDepartmentIds) {
+            $query->whereIn('department_id', $hodDepartmentIds);
+        })->where('status', 'Hr Approved');
     }
 
-    // if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
-    //   // dd($request->user_ids);
-    //   $query->whereIn('user_id', $request->input('user_ids'));
-    // }
-
-
-
+    // Apply filters based on request parameters
     if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
-      $userIds = collect($request->input('user_ids'))->flatten()->toArray();
-      $query->whereIn('user_id', $userIds);
+        $userIds = collect($request->input('user_ids'))->flatten()->toArray();
+        Log::info('Filtering by user_ids', ['user_ids' => $userIds]);
+        $query->whereIn('user_id', $userIds);
     }
 
     if ($request->has('unit_ids') && is_array($request->input('unit_ids'))) {
-
-      $query->whereHas('user', function ($query) use ($request) {
-        $query->whereIn('unit_id', $request->input('unit_ids'));
-      });
+        Log::info('Filtering by unit_ids', ['unit_ids' => $request->input('unit_ids')]);
+        $query->whereHas('user', function ($query) use ($request) {
+            $query->whereIn('unit_id', $request->input('unit_ids'));
+        });
     }
 
     if ($request->has('leave_type_ids') && is_array($request->input('leave_type_ids'))) {
-      $query->whereIn('leave_type_id', $request->input('leave_type_ids'));
+        Log::info('Filtering by leave_type_ids', ['leave_type_ids' => $request->input('leave_type_ids')]);
+        $query->whereIn('leave_type_id', $request->input('leave_type_ids'));
     }
 
     if ($request->has('application_date')) {
-      $applicationDate = $request->input('application_date');
-      $query->whereDate('created_at', $applicationDate);
+        $applicationDate = $request->input('application_date');
+        Log::info('Filtering by application_date', ['application_date' => $applicationDate]);
+        $query->whereDate('created_at', $applicationDate);
     }
 
-
     if ($request->has('status')) {
-      $status = $request->input('status');
-      $query->where('status', $status);
+        $status = $request->input('status');
+        Log::info('Filtering by status', ['status' => $status]);
+        $query->where('status', $status);
     }
 
     if ($request->has('from')) {
-      $startDate = $request->input('from');
-      $query->whereDate('from', $startDate);
+        $startDate = $request->input('from');
+        Log::info('Filtering by from date', ['from' => $startDate]);
+        $query->whereDate('from', $startDate);
     }
 
     if ($request->has('statuses') && is_array($request->input('statuses'))) {
-      $query->whereIn('status', $request->input('statuses'));
+        Log::info('Filtering by multiple statuses', ['statuses' => $request->input('statuses')]);
+        $query->whereIn('status', $request->input('statuses'));
     }
 
-    $leaves = $query
-    ->orderBy('created_at', 'desc')->get();
+    // Log the final query (useful for debugging)
+    Log::info('Final Leave Query', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
 
+    $leaves = $query->orderBy('created_at', 'desc')->get();
+
+    // Append full name for each user
     $leaves = $leaves->map(function ($leave) {
-      $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
-      return $leave;
+        $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
+        return $leave;
     });
 
+    Log::info('Leaves fetched successfully', ['leave_count' => count($leaves)]);
+
     return response()->json(['leaves' => $leaves]);
-  }
+}
+
+  // public function index(Request $request)
+  // {
+
+  //   $query = Leave::with('leave_type', 'user.department')
+  //     ->whereHas('user', function ($query) {
+  //       $query->whereNull('deleted_at');
+  //     });
+
+
+
+  //   $user = auth()->user();
+  //   $unitId = $user->unit_id;
+
+
+  //   $isHod = $user->is_hod;
+  //   $isHr = $user->is_hr; // Assuming HR role check
+
+  //   // If the user is not HR or HOD, restrict leaves to their unit
+  //   if (!$isHod && !$isHr) {
+  //     $query->whereHas('user', function ($q) use ($unitId) {
+  //       $q->where('unit_id', $unitId);
+  //     });
+  //   }
+
+  //   if ($user && $user->is_hod) {
+  //     // Get HOD's department IDs
+  //     $hodDepartmentIds = $user->departments?->pluck('id')->toArray() ?? [];
+
+  //     // Filter leaves to only include users within the HOD’s departments and HR Approved status
+  //     $query->whereHas('user', function ($query) use ($hodDepartmentIds) {
+  //       $query->whereIn('department_id', $hodDepartmentIds);
+  //     })->where('status', 'Hr Approved');
+  //   }
+
+  //   // if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
+  //   //   // dd($request->user_ids);
+  //   //   $query->whereIn('user_id', $request->input('user_ids'));
+  //   // }
+
+
+
+  //   if ($request->has('user_ids') && is_array($request->input('user_ids'))) {
+  //     $userIds = collect($request->input('user_ids'))->flatten()->toArray();
+  //     $query->whereIn('user_id', $userIds);
+  //   }
+
+  //   if ($request->has('unit_ids') && is_array($request->input('unit_ids'))) {
+
+  //     $query->whereHas('user', function ($query) use ($request) {
+  //       $query->whereIn('unit_id', $request->input('unit_ids'));
+  //     });
+  //   }
+
+  //   if ($request->has('leave_type_ids') && is_array($request->input('leave_type_ids'))) {
+  //     $query->whereIn('leave_type_id', $request->input('leave_type_ids'));
+  //   }
+
+  //   if ($request->has('application_date')) {
+  //     $applicationDate = $request->input('application_date');
+  //     $query->whereDate('created_at', $applicationDate);
+  //   }
+
+
+  //   if ($request->has('status')) {
+  //     $status = $request->input('status');
+  //     $query->where('status', $status);
+  //   }
+
+  //   if ($request->has('from')) {
+  //     $startDate = $request->input('from');
+  //     $query->whereDate('from', $startDate);
+  //   }
+
+  //   if ($request->has('statuses') && is_array($request->input('statuses'))) {
+  //     $query->whereIn('status', $request->input('statuses'));
+  //   }
+
+  //   $leaves = $query
+  //     ->orderBy('created_at', 'desc')->get();
+
+  //   $leaves = $leaves->map(function ($leave) {
+  //     $leave->user->name = $leave->user->firstname . ' ' . $leave->user->lastname;
+  //     return $leave;
+  //   });
+
+  //   return response()->json(['leaves' => $leaves]);
+  // }
 
   public function userLeaves(Request $request)
   {
@@ -595,3 +689,6 @@ class LeaveApiController extends Controller
     return response()->json(['message' => 'PDF file generated successfully']);
   }
 }
+
+
+
