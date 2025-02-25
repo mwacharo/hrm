@@ -157,7 +157,7 @@
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="formData.category"
-                                        :items="['Hardware', 'Software', 'Stationery', 'Furniture', 'Electronics']"
+                                        :items="['Hardware', 'Software', 'Stationery', 'Furniture', 'Electronics', 'Printer ']"
                                         label="Category" variant="outlined">
                                     </v-select>
                                 </v-col>
@@ -166,6 +166,21 @@
                                         placeholder="HP HP Pavilion Laptop 15-eg1xxx" variant="outlined">
                                     </v-textarea>
                                 </v-col>
+
+                            
+                                    <v-col cols="12" sm="6">
+                                        <v-text-field v-model="formData.purchase_cost" label="Purchase Cost"
+                                            placeholder="Ksh 100,000" variant="outlined">
+                                        </v-text-field>
+                                    </v-col>
+                             
+                            
+                                    <v-col cols="12" sm="6">
+                                        <v-text-field v-model="formData.purchase_date" label="Purchase Date" type="date"
+                                            variant="outlined">
+                                        </v-text-field>
+                                    </v-col>
+                         
 
                                 <v-col cols="12" sm="6">
                                     <v-select :items="users" item-title="fullName" item-value="id" search-input
@@ -200,7 +215,7 @@
             <v-card>
                 <v-card-title>Assign Employee</v-card-title>
                 <v-card-text>
-            
+
 
                     <v-select :items="users" item-title="fullName" item-value="id" search-input clearable mutiple
                         v-model="formData.issued_to" label="Assign to Employee">
@@ -287,6 +302,8 @@ export default {
                 description: '',
                 comment: '',
                 issued_by: null,
+                purchase_cost: null,
+                purchase_date: null,
             },
             editMode: false,
             editedResourceId: null,
@@ -307,7 +324,8 @@ export default {
                 { title: 'Issued By', value: 'issued_by' },
                 { title: 'Condition', value: 'condition' },
                 { title: 'Comment', value: 'comment' },
-
+                { title: 'Purchase Cost', value: 'purchase_cost' },
+                { title: 'Purchase Date', value: 'purchase_date' },
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
         };
@@ -435,7 +453,9 @@ export default {
                 condition: '',
                 issuance_date: '',
                 comment: '',
-                issued_by: null
+                issued_by: null,
+                purchase_date: null,
+                purchase_cost: null,
             };
             this.dialog = true;
         },
@@ -451,7 +471,9 @@ export default {
                 condition: resource.condition,
                 description: resource.description,
                 issuance_date: resource.issuance_date,
-                comment: resource.comment
+                comment: resource.comment,
+                purchase_date: resource.purchase_date,
+                purchase_cost: resource.purchase_cost,
             };
             this.dialog = true;
         },

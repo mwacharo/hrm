@@ -51,6 +51,7 @@ class ResourceApiController extends Controller
             'condition' => 'nullable|string|max:255',
             'warranty' => 'nullable|string|max:255',
             'purchase_cost' => 'nullable|numeric|min:0',
+            'purchase_date' => 'nullable|date',
             'issued_by' => 'nullable',
             'issued_to' => 'nullable',
         ];
@@ -94,6 +95,9 @@ public function update(Request $request, Asset $asset)
         'condition' => 'nullable|string|max:255',
         'warranty' => 'nullable|string|max:255',
         'purchase_cost' => 'nullable|numeric|min:0',
+        // 'purchase_date' => 'nullable|numeric|min:0',
+        'purchase_date' => 'nullable|date',
+
         'issued_by' => 'nullable|exists:users,id',
         'issued_to' => 'nullable|exists:users,id'
     ];
@@ -131,6 +135,32 @@ public function update(Request $request, Asset $asset)
         $asset->delete();
 
         return response()->json(['message' => 'Asset deleted successfully'], 200);
+    }
+
+
+    public function reassign(Request $request, Asset $asset)
+    {
+        $rules = [
+            'issued_to' => 'required|exists:users,id',
+        ];
+
+        $validatedData = $request->validate($rules);
+
+        try {
+            $asset->update([
+                'issued_to' => $validatedData['issued_to'],
+                'issued_by' => auth()->id(),
+                'is_assigned' => true,
+            ]);
+
+            Log::info('Asset reassigned successfully', ['asset_id' => $asset->id, 'issued_to' => $validatedData['issued_to']]);
+
+            return response()->json(['message' => 'Asset reassigned successfully', 'asset' => $asset], 200);
+        } catch (\Exception $e) {
+            Log::error('Error reassigning asset', ['error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Failed to reassign asset'], 500);
+        }
     }
 
 }
