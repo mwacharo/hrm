@@ -99,7 +99,7 @@
                     }}</v-list-item-content>
                 </v-list-item>
               </v-list>
-              <v-btn @click="applyLeaveModal = true" color="primary" block>Apply for Leave</v-btn>
+              <!-- <v-btn @click="applyLeaveModal = true" color="primary" block>Apply for Leave</v-btn> -->
             </v-card-text>
           </v-card>
         </v-col>
@@ -259,7 +259,7 @@
             </v-form>
           </v-card-text>
           <v-card-actions class="justify-end ">
-            <v-btn color="red" @click="applyLeaveModal = false" outlined>Cancel</v-btn>
+            <!-- <v-btn color="red" @click="applyLeaveModal = false" outlined>Cancel</v-btn> -->
             <v-btn class="text-primary mr-2" @click="submitNewLeave">Apply</v-btn>
             <v-progress-circular v-if="isLoading" class="ml-2" color="primary" indeterminate>
             </v-progress-circular>

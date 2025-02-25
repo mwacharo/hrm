@@ -55,6 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('v1/permissions/{userId}', [PermissionApiController::class, 'getUserPermissions']);
   Route::put('v1/users/{userId}/update-permissions', [PermissionApiController::class, 'updateUserPermissions']);
   Route::get('v1/roles', [RoleApiController::class, 'index']);
+  // Route::post('v1/roles', [RoleApiController::class, 'store']);
+
 
   //tasks
   Route::get('v1/tasks', [TaskApiController::class, 'index']);

@@ -27,7 +27,7 @@ class Leave extends Model
     }
 
 
-    public function getCreatedAtAttribute($value)
+    public function l($value)
     {
         return Carbon::parse($value)->toDateString();
     }

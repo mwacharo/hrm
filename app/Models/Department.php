@@ -10,7 +10,7 @@ class Department extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name',
+        'name', 
     ];
 
     public function users()
@@ -23,5 +23,12 @@ class Department extends Model
     public function hods()
     {
         return $this->belongsToMany(User::class, 'hod_departments', 'department_id', 'user_id');
+    }
+
+
+    // has manager 
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
