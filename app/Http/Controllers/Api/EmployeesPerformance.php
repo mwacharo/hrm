@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 
 class EmployeesPerformance extends Controller
 {
-    protected $crm_email = env('CRM_EMAIL');
-    protected $crm_password = env('CRM_PASSWORD');
+    // protected $crm_email = env('CRM_EMAIL');
+    // protected $crm_password = env('CRM_PASSWORD');
 
     private function getAccessToken()
     {

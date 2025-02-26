@@ -167,20 +167,20 @@
                                     </v-textarea>
                                 </v-col>
 
-                            
-                                    <v-col cols="12" sm="6">
-                                        <v-text-field v-model="formData.purchase_cost" label="Purchase Cost"
-                                            placeholder="Ksh 100,000" variant="outlined">
-                                        </v-text-field>
-                                    </v-col>
-                             
-                            
-                                    <v-col cols="12" sm="6">
-                                        <v-text-field v-model="formData.purchase_date" label="Purchase Date" type="date"
-                                            variant="outlined">
-                                        </v-text-field>
-                                    </v-col>
-                         
+
+                                <v-col cols="12" sm="6">
+                                    <v-text-field v-model="formData.purchase_cost" label="Purchase Cost"
+                                        placeholder="Ksh 100,000" variant="outlined">
+                                    </v-text-field>
+                                </v-col>
+
+
+                                <v-col cols="12" sm="6">
+                                    <v-text-field v-model="formData.purchase_date" label="Purchase Date" type="date"
+                                        variant="outlined">
+                                    </v-text-field>
+                                </v-col>
+
 
                                 <v-col cols="12" sm="6">
                                     <v-select :items="users" item-title="fullName" item-value="id" search-input
@@ -211,16 +211,13 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <!-- asssig Assign Employee   -->
         <v-dialog v-model="assignUserModal" max-width="500px">
             <v-card>
                 <v-card-title>Assign Employee</v-card-title>
                 <v-card-text>
-
-
-                    <v-select :items="users" item-title="fullName" item-value="id" search-input clearable mutiple
-                        v-model="formData.issued_to" label="Assign to Employee">
-                    </v-select>
-
+                    <v-select :items="users" :item-title="'fullName'" :item-value="'id'" v-model="formData.issued_to"
+                        label="Assign to Employee" clearable></v-select>
 
                 </v-card-text>
                 <v-card-actions class="justify-space-between">
@@ -229,6 +226,61 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+
+        <!-- Asset logs -->
+
+            <v-dialog v-model="logsModal" max-width="700px" full-height top>
+                <v-card class="elevation-10">
+                    <v-card-title class="headline">
+                        <v-icon color="primary">mdi-history</v-icon>
+                        Asset Logs
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text>
+                        <!-- Loading Indicator -->
+                        <v-progress-circular v-if="loadingLogs" indeterminate color="primary" />
+
+                        <!-- Logs List -->
+                        <v-list dense v-else>
+                            <v-list-item-group>
+                                <v-list-item v-for="(log, index) in logs" :key="index">
+                                    <v-list-item-content>
+                                        <v-list-item-title class="mb-3">
+                                            <v-icon color="secondary" class="mr-1">mdi-account-circle</v-icon>
+                                            <strong>User:</strong> {{ log.user }}
+                                        </v-list-item-title>
+                                        <v-list-item-title class="mb-3">
+                                            <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
+                                            <strong>Action:</strong> {{ log.action }}
+                                        </v-list-item-title>
+
+                                        <v-list-item-title class="mb-3">
+                                            <v-icon color="secondary" class="mr-1">mdi-account-arrow-right</v-icon>
+                                            <strong> To:</strong> {{
+                                                log.details.issued_to }}
+                                        </v-list-item-title>
+                                        <v-list-item-subtitle>
+                                            <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
+                                            <strong>Time:</strong> {{ log.time }}
+                                        </v-list-item-subtitle>
+                                    </v-list-item-content>
+                                </v-list-item>
+                            </v-list-item-group>
+                        </v-list>
+                    </v-card-text>
+                    <v-divider></v-divider>
+                    <v-card-actions>
+                        <v-btn color="primary" @click="closelogsModal" outlined>
+                            <v-icon left>mdi-close-circle-outline</v-icon> Close
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+
+
+
+        <!-- clear  -->
         <v-dialog v-model="resourceClearanceModal" max-width="500px" persistent>
             <v-card>
                 <v-card-title class="text-center">
@@ -241,12 +293,10 @@
                             placeholder="Serial no..." @keyup.enter="checkSerialNumber">
                         </v-text-field>
                     </v-col>
-                    <v-col cols="12">
-                        <v-text-field v-model="clearanceForm.user_id" label="User" ref="user_id" variant="outlined">
-                            {{ getUserFullName(clearanceForm.user_id) }}
-                        </v-text-field>
-                    </v-col>
-
+                    <!-- <v-col cols="12">
+                        <v-select :items="users" :item-title="'fullName'" :item-value="'id'"
+                            v-model="clearanceForm.user_id" label="Clear Employee" clearable multiple></v-select>
+                    </v-col> -->
                     <v-col cols="12">
                         <v-textarea v-model="clearanceForm.comment" label="Comment" placeholder="cleared.."
                             variant="outlined">
@@ -256,7 +306,7 @@
                 <v-divider></v-divider>
                 <v-card-actions class="justify-space-between">
                     <v-btn @click="resourceClearanceModal = false">Close</v-btn>
-                    <v-btn variant="tonal" :loading="loading" @click="loading = !loading" color="primary">
+                    <v-btn variant="tonal" :loading="loading" @click="clearAsset" color="primary">
                         Submit
                         <template v-slot:loader>
                             <v-progress-linear indeterminate></v-progress-linear>
@@ -277,6 +327,11 @@ export default {
     },
     data() {
         return {
+
+            logsModal: false,
+            logs: [],
+            loadingLogs: false,
+            selectedItemId: null,
             selected: [],
             resources: [],
             users: [],
@@ -348,6 +403,73 @@ export default {
     },
     methods: {
 
+        assignUser() {
+            console.log('Assigning user to resource...');
+            console.log('Selected user:', this.formData.issued_to);
+            console.log('Selected resource:', this.selectedItemId);
+            axios.put(`/api/v1/resources/${this.selectedItemId}/reassign`, {
+
+                issued_to: this.formData.issued_to,
+            })
+                .then(response => {
+                    console.log('API response:', response);
+                    this.$toastr.success(response.data.message);
+                    this.assignUserModal = false;
+                    this.fetchResources();
+                })
+                .catch(error => {
+                    console.error('Error assigning user to resource:', error);
+                    if (error.response && error.response.data && error.response.data.error) {
+                        this.$toastr.error(error.response.data.error);
+                    } else {
+                        this.$toastr.error('An error occurred while assigning user to resource.');
+                    }
+                });
+        },
+
+
+        closelogsModal() {
+            this.logsModal = false;
+
+        },
+
+        viewHistory(item) {
+            this.logsModal = true;
+            this.fetchLogs(item.id);
+        },
+        async fetchLogs(resourceId) {
+            this.loadingLogs = true;
+            try {
+                const response = await axios.get(`/api/v1/resource-logs/${resourceId}`);
+                this.logs = response.data.logs;
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                this.$toastr.error('Failed to fetch logs.');
+            } finally {
+                this.loadingLogs = false;
+            }
+        },
+        async clearAsset() {
+            try {
+                const response = await axios.post(`/api/v1/resources/${this.clearanceForm.serial_no}/clear`, {
+                    user_id: this.clearanceForm.user_id,
+                    comment: this.clearanceForm.comment,
+
+                });
+
+                this.$toastr.success(response.data.message);
+                this.resourceClearanceModal = false;
+                this.fetchResources();
+            } catch (error) {
+                console.error('Error clearing asset:', error);
+                if (error.response && error.response.data && error.response.data.error) {
+                    this.$toastr.error(error.response.data.error);
+                } else {
+                    this.$toastr.error('An error occurred while clearing the asset.');
+                }
+            }
+        },
+
         fetchResources(name) {
             let url = '/api/v1/resources';
             if (name) {
@@ -391,14 +513,9 @@ export default {
             this.filterResources('Phone');
         },
         fetchUsers() {
-
             console.log('Fetching users from the API...');
-
-
             axios.get('/api/v1/users')
-
                 .then(response => {
-
                     console.log('API response received:', response);
 
                     if (response.data && response.data.users) {
@@ -410,9 +527,7 @@ export default {
                             id: user.id,
 
                             fullName: `${user.firstname} ${user.lastname}`,
-
                         }));
-
                         // console.log('Processed users:', this.users); 
                         console.log('Processed users:', JSON.parse(JSON.stringify(this.users)));
 
@@ -423,13 +538,10 @@ export default {
                     }
 
                 })
-
                 .catch(error => {
 
                     console.error('Error fetching users:', error); // Log the error
-
                 });
-
         },
         getUserFullName(userId) {
             const user = this.users.find(user => user.id === userId);
@@ -467,7 +579,7 @@ export default {
                 serial_no: resource.serial_no,
                 category: resource.category,
                 issued_to: resource.issued_to,
-                issued_by: resource.issued_by.id,
+                issued_by: resource.issued_by && resource.issued_by.id ? resource.issued_by.id : null,
                 condition: resource.condition,
                 description: resource.description,
                 issuance_date: resource.issuance_date,
@@ -578,9 +690,6 @@ export default {
             // Method to view resource details
             // Implement based on your requirements
         },
-
-
-
     },
 
 };

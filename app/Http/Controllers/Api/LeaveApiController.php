@@ -454,7 +454,7 @@ public function store(Request $request)
         'days' => 'required|integer',
         'hod' => 'required|exists:users,id',
         'manager' => 'required|exists:users,id',
-        'document' => 'required|file|mimes:pdf,doc,docx',
+        'document' => 'nullable|file|mimes:pdf,doc,docx',
     ]);
 
     // dd($request->document);

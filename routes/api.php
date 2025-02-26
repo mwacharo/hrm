@@ -23,7 +23,7 @@ use App\Http\Controllers\Api\AttendanceApiController;
 use App\Http\Controllers\Api\DepartmentApiController;
 use App\Http\Controllers\Api\PermissionApiController;
 use App\Http\Controllers\Api\DesignationApiController;
-use App\Http\Controllers\Api\AnnouncementApiController;
+// use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\DisciplinaryApiController;
 use App\Http\Controllers\Api\RequisitionApiController;
 
@@ -87,10 +87,10 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::delete('v1/disciplinaries/{disciplinary}', [DisciplinaryApiController::class, 'destroy']);
 
   //announcements
-  Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
-  Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
-  Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
-  Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
+  // Route::get('v1/announcements', [AnnouncementApiController::class, 'index']);
+  // Route::post('v1/announcements', [AnnouncementApiController::class, 'store']);
+  // Route::put('v1/announcements/{announcement}', [AnnouncementApiController::class, 'update']);
+  // Route::delete('v1/announcements/{announcement}', [AnnouncementApiController::class, 'destroy']);
 
   //attendance
   Route::get('v1/attendances', [AttendanceApiController::class, 'index']);
@@ -148,6 +148,10 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/v1/resources', [ResourceApiController::class, 'store']);
   Route::put('/v1/resources/{asset}', [ResourceApiController::class, 'update']);
   Route::delete('/v1/resources/{asset}', [ResourceApiController::class, 'destroy']);
+  Route::post('/v1/resources/{asset}/clear', [ResourceApiController::class, 'clearAsset']);
+  Route::put('/v1/resources/{asset}/reassign', [ResourceApiController::class, 'reassignAsset']);
+  Route::get('v1/resource-logs/{id}', [ResourceApiController::class, 'resourceLogs']);
+  
 
   //tickets
   Route::get('/v1/tickets', [TicketApiController::class, 'index']);
