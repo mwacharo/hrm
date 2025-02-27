@@ -25,7 +25,8 @@ class Asset extends Model
         'issued_by',
         'repair_cost',
         'is_assigned',
-        'comment'
+        'comment',
+        'unit_id',
     ];
 
 

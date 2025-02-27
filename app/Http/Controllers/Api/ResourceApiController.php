@@ -6,9 +6,11 @@ use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Imports\AssetImport;
 use App\Models\AssetLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ResourceApiController extends Controller
 {
@@ -289,6 +291,36 @@ public function logAssetAction($asset, $action, $details, $userId)
         Log::error('Error logging asset action', ['error' => $e->getMessage()]);
     }
 }
+
+
+
+
+public function upload(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls,ods|max:10240',
+    ]);
+
+    $file = $request->file('file');
+
+    try {
+        $import = new AssetImport();
+        Excel::import($import, $file);
+
+        // Access the imported data
+        $importedData = $import->importedData;
+
+        // Return the imported data along with the success message
+        return response()->json([
+            'message' => 'File uploaded successfully',
+            'imported_data' => $importedData,
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
+
 
 }
 

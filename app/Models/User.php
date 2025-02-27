@@ -200,4 +200,11 @@ class User extends Authenticatable
        return $this->belongsToMany(Department::class, 'hod_departments', 'user_id', 'department_id');
    }
 
+
+
+  //  public function fullName()
+  //  {
+  //      return "{$this->firstname} {$this->lastname}";
+  //  }
+
 }

@@ -31,6 +31,8 @@
             </v-col>
             <v-col>
                 <v-row justify="end" class="text-right">
+
+                    <v-text-field v-model="search" label="Search" clearable @clear="clearSearch"></v-text-field>
                     <v-col cols="auto">
                         <v-btn v-if="roles.includes('admin')" @click="addResource" icon>
                             <v-tooltip activator="parent" location="top">Add Resource</v-tooltip>
@@ -43,6 +45,17 @@
                             <v-icon color="primary" x-small>mdi-filter</v-icon>
                         </v-btn>
                     </v-col>
+
+
+                    <!-- Import Asset -->
+
+                    <v-col cols="auto" v-if="resources.length > 0">
+                        <v-btn v-if="roles.includes('admin')" @click="importAsset" icon>
+                            <v-tooltip activator="parent" location="top">Import Asset</v-tooltip>
+                            <v-icon color="primary" x-small>mdi-file</v-icon>
+                        </v-btn>
+                    </v-col>
+
                     <v-col cols="auto" v-if="resources.length > 0">
                         <v-btn v-if="roles.includes('admin')" @click.prevent="downloadReport" icon>
                             <v-tooltip activator="parent" location="top">Generate Report</v-tooltip>
@@ -230,53 +243,53 @@
 
         <!-- Asset logs -->
 
-            <v-dialog v-model="logsModal" max-width="700px" full-height top>
-                <v-card class="elevation-10">
-                    <v-card-title class="headline">
-                        <v-icon color="primary">mdi-history</v-icon>
-                        Asset Logs
-                    </v-card-title>
-                    <v-divider></v-divider>
-                    <v-card-text>
-                        <!-- Loading Indicator -->
-                        <v-progress-circular v-if="loadingLogs" indeterminate color="primary" />
+        <v-dialog v-model="logsModal" max-width="700px" full-height top>
+            <v-card class="elevation-10">
+                <v-card-title class="headline">
+                    <v-icon color="primary">mdi-history</v-icon>
+                    Asset Logs
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text>
+                    <!-- Loading Indicator -->
+                    <v-progress-circular v-if="loadingLogs" indeterminate color="primary" />
 
-                        <!-- Logs List -->
-                        <v-list dense v-else>
-                            <v-list-item-group>
-                                <v-list-item v-for="(log, index) in logs" :key="index">
-                                    <v-list-item-content>
-                                        <v-list-item-title class="mb-3">
-                                            <v-icon color="secondary" class="mr-1">mdi-account-circle</v-icon>
-                                            <strong>User:</strong> {{ log.user }}
-                                        </v-list-item-title>
-                                        <v-list-item-title class="mb-3">
-                                            <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
-                                            <strong>Action:</strong> {{ log.action }}
-                                        </v-list-item-title>
+                    <!-- Logs List -->
+                    <v-list dense v-else>
+                        <v-list-item-group>
+                            <v-list-item v-for="(log, index) in logs" :key="index">
+                                <v-list-item-content>
+                                    <v-list-item-title class="mb-3">
+                                        <v-icon color="secondary" class="mr-1">mdi-account-circle</v-icon>
+                                        <strong>User:</strong> {{ log.user }}
+                                    </v-list-item-title>
+                                    <v-list-item-title class="mb-3">
+                                        <v-icon color="secondary" class="mr-1">mdi-check-circle-outline</v-icon>
+                                        <strong>Action:</strong> {{ log.action }}
+                                    </v-list-item-title>
 
-                                        <v-list-item-title class="mb-3">
-                                            <v-icon color="secondary" class="mr-1">mdi-account-arrow-right</v-icon>
-                                            <strong> To:</strong> {{
-                                                log.details.issued_to }}
-                                        </v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
-                                            <strong>Time:</strong> {{ log.time }}
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-list-item-group>
-                        </v-list>
-                    </v-card-text>
-                    <v-divider></v-divider>
-                    <v-card-actions>
-                        <v-btn color="primary" @click="closelogsModal" outlined>
-                            <v-icon left>mdi-close-circle-outline</v-icon> Close
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
+                                    <v-list-item-title class="mb-3">
+                                        <v-icon color="secondary" class="mr-1">mdi-account-arrow-right</v-icon>
+                                        <strong> To:</strong> {{
+                                            log.details.issued_to }}
+                                    </v-list-item-title>
+                                    <v-list-item-subtitle>
+                                        <v-icon color="secondary" class="mr-1">mdi-clock-time-eight</v-icon>
+                                        <strong>Time:</strong> {{ log.time }}
+                                    </v-list-item-subtitle>
+                                </v-list-item-content>
+                            </v-list-item>
+                        </v-list-item-group>
+                    </v-list>
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions>
+                    <v-btn color="primary" @click="closelogsModal" outlined>
+                        <v-icon left>mdi-close-circle-outline</v-icon> Close
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
 
 
@@ -402,6 +415,36 @@ export default {
 
     },
     methods: {
+
+
+        importAsset() {
+            // Logic to handle asset import
+            // You can open a file dialog to select a file and then process it
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv, .xlsx';
+            input.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    try {
+                        const response = await axios.post('/api/v1/resources/import', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                            },
+                        });
+                        this.$toastr.success(response.data.message);
+                        this.fetchResources();
+                    } catch (error) {
+                        console.error('Error importing asset:', error);
+                        this.$toastr.error('Failed to import asset.');
+                    }
+                }
+            };
+            input.click();
+        },
 
         assignUser() {
             console.log('Assigning user to resource...');
