@@ -30,4 +30,9 @@ class Complaint extends Model
     public function addressedTo(){
         return $this->belongsTo(User::class, 'addressed_to');
     }
+
+    // public function assignedTo()
+    // {
+    //     return $this->belongsTo(User::class, 'assigned_to'); // Adjust foreign key if needed
+    // }
 }

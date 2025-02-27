@@ -2,41 +2,67 @@
 
 namespace App\Imports;
 
-use App\Models\Asset;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
-
-
-class AssetImport implements ToModel, WithHeadingRow
+class AssetImport implements ToCollection, WithHeadingRow
 {
     public $importedData = [];
 
-    public function model(array $row)
-    {
-        // Store each row's data in the importedData property
-        $this->importedData[] = $row;
+    // Define location-to-unit mapping
+    private $unitMapping = [
+        'hq'       => 1,
+        'uganda'   => 2,
+        'tanzania' => 3,
+    ];
 
-        // Return a new Asset instance to be saved to the database
-        return new Asset([
-            'name'           => $row['name'],
-            'description'    => $row['description'],
-            'category'       => $row['category'],
-            'issuance_date'  => $row['issuance_date'],
-            'office_id'      => $row['office_id'],
-            'department_id'  => $row['department_id'],
-            'serial_no'      => $row['serial_no'],
-            'condition'      => $row['condition'],
-            'warranty'       => $row['warranty'],
-            'purchase_cost'  => $row['purchase_cost'],
-            'purchase_date'  => $row['purchase_date'],
-            'issued_to'      => $row['issued_to'],
-            'issued_by'      => $row['issued_by'],
-            'repair_cost'    => $row['repair_cost'],
-            'is_assigned'    => $row['is_assigned'],
-            'comment'        => $row['comment'],
-            'unit_id'        => $row['unit_id'],
-        ]);
+    public function collection(Collection $rows)
+    {
+        foreach ($rows as $row) {
+            // Normalize the keys to lowercase
+            $row = array_change_key_case($row->toArray(), CASE_LOWER);
+
+            // Map location to unit_id
+            $location = strtolower(trim($row['location'] ?? ''));
+            $unitId = $this->unitMapping[$location] ?? null;
+
+            // Ensure `purchase_date` is in YYYY-MM-DD format
+            $purchaseDate = $row['purchase_date'] ?? null;
+            if ($purchaseDate && preg_match('/\d{2}\.\d{2}\.\d{4}/', $purchaseDate)) {
+                try {
+                    $purchaseDate = Carbon::createFromFormat('d.m.Y', $purchaseDate)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $purchaseDate = null; // Skip invalid date
+                }
+            }
+
+            // Store each row's data safely
+            $this->importedData[] = [
+                'name'           => $row['name'] ?? null,
+                'description'    => $row['description'] ?? null,
+                'category'       => $row['category'] ?? null,
+                'issuance_date'  => $row['issuance_date'] ?? null,
+                'office_id'      => $row['office_id'] ?? null,
+                'department_id'  => $row['department_id'] ?? null,
+                'serial_no'      => $row['serial_no'] ?? null,
+                'condition'      => $row['condition'] ?? 'Unknown',
+                'warranty'       => $row['warranty'] ?? null,
+                'purchase_cost'  => $row['purchase_cost'] ?? 0,
+                'purchase_date'  => $purchaseDate, // ✅ Formatted correctly
+                'issued_to'      => $row['issued_to'] ?? null, // Fixed key issue
+                'issued_by'      => $row['issued_by'] ?? null,
+                'repair_cost'    => $row['repair_cost'] ?? 0, // Ensured numeric default
+                'is_assigned'    => $row['is_assigned'] ?? 0, // Ensured numeric default
+                'comment'        => $row['comment'] ?? '',
+                'unit_id'        => $unitId,
+            ];
+        }
+    }
+
+    public function getImportedData()
+    {
+        return $this->importedData;
     }
 }
-

@@ -9,25 +9,34 @@ class Asset extends Model
 {
     use SoftDeletes;
 
+    // protected $fillable = [
+    //     'name',
+    //     'description',
+    //     'category',
+    //     'issuance_date',
+    //     'office_id',
+    //     'department_id',
+    //     'serial_no',
+    //     'condition',
+    //     'warranty',
+    //     'purchase_cost',
+    //     'purchase_date',
+    //     'issued_to',
+    //     'issued_by',
+    //     'repair_cost',
+    //     'is_assigned',
+    //     'comment',
+    //     'unit_id',
+    // ];
+
+
     protected $fillable = [
-        'name',
-        'description',
-        'category',
-        'issuance_date',
-        'office_id',
-        'department_id',
-        'serial_no',
-        'condition',
-        'warranty',
-        'purchase_cost',
-        'purchase_date',
-        'issued_to',
-        'issued_by',
-        'repair_cost',
-        'is_assigned',
-        'comment',
-        'unit_id',
+        'name', 'description', 'category', 'issuance_date', 'office_id', 
+        'department_id', 'serial_no', 'condition', 'warranty', 'purchase_cost', 
+        'purchase_date', 'issued_to', 'issued_by', 'repair_cost', 'is_assigned', 
+        'comment', 'unit_id'
     ];
+    
 
 
 

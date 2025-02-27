@@ -11,6 +11,7 @@ use App\Models\AssetLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class ResourceApiController extends Controller
 {
@@ -141,7 +142,7 @@ class ResourceApiController extends Controller
         try {
 
             $assetDetails = $asset->toArray();
-  
+
             log::info('Asset deletion request received', $assetDetails);
             $this->logAssetAction($asset, 'deleted', json_encode($assetDetails), auth()->id());
 
@@ -166,7 +167,7 @@ class ResourceApiController extends Controller
             $asset->update([
                 'issued_to' => $validatedData['issued_to'],
                 'issued_by' => auth()->id(),
-            
+
             ]);
 
             Log::info('Asset reassigned successfully', ['asset_id' => $asset->id, 'issued_to' => $validatedData['issued_to']]);
@@ -181,148 +182,166 @@ class ResourceApiController extends Controller
         }
     }
 
-    public function clearAsset( Request $request ,$serial_number)
-{
+    public function clearAsset(Request $request, $serial_number)
+    {
 
 
-    // dd($request->all());
-    // Find asset by serial_number
-    $asset = Asset::where('serial_no', $serial_number)->first();
+        // dd($request->all());
+        // Find asset by serial_number
+        $asset = Asset::where('serial_no', $serial_number)->first();
 
-    if (!$asset) {
-        return response()->json(['message' => 'Asset not found'], 404);
-    }
-
-    try {
-        // Clear assignment
-        $asset->update([
-            'issued_to' => null,
-            'issued_by' => null,
-            'comment' => $request->comment,
-          
-        ]);
-
-        Log::info('Asset assignment cleared successfully', ['asset_id' => $asset->id]);
-
-        // Log action
-        $this->logAssetAction($asset, 'cleared', json_encode($asset->toArray()), auth()->id());
-
-        return response()->json(['message' => 'Asset assignment cleared successfully', 'asset' => $asset], 200);
-    } catch (\Exception $e) {
-        Log::error('Error clearing asset assignment', ['error' => $e->getMessage()]);
-
-        return response()->json(['message' => 'Failed to clear asset assignment'], 500);
-    }
-
-
-}
-public function resourceLogs($id)
-{
-    try {
-        $logs = AssetLog::where('asset_id', $id)->with('user')->get();
-
-        if ($logs->isEmpty()) {
-            return response()->json(['message' => 'No logs found for this asset'], 404);
+        if (!$asset) {
+            return response()->json(['message' => 'Asset not found'], 404);
         }
 
-        $formattedLogs = $logs->map(function ($log) {
-            $details = json_decode($log->details, true);
-            $issuedToFullName = 'Unknown User';
+        try {
+            // Clear assignment
+            $asset->update([
+                'issued_to' => null,
+                'issued_by' => null,
+                'comment' => $request->comment,
 
-            // Get the issued_to username if it exists
-            if (isset($details['issued_to'])) {
-                $issuedToUser = User::find($details['issued_to']);
-                if ($issuedToUser) {
-                    $issuedToFullName = $issuedToUser->firstname . ' ' . $issuedToUser->lastname;
+            ]);
+
+            Log::info('Asset assignment cleared successfully', ['asset_id' => $asset->id]);
+
+            // Log action
+            $this->logAssetAction($asset, 'cleared', json_encode($asset->toArray()), auth()->id());
+
+            return response()->json(['message' => 'Asset assignment cleared successfully', 'asset' => $asset], 200);
+        } catch (\Exception $e) {
+            Log::error('Error clearing asset assignment', ['error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Failed to clear asset assignment'], 500);
+        }
+    }
+    public function resourceLogs($id)
+    {
+        try {
+            $logs = AssetLog::where('asset_id', $id)->with('user')->get();
+
+            if ($logs->isEmpty()) {
+                return response()->json(['message' => 'No logs found for this asset'], 404);
+            }
+
+            $formattedLogs = $logs->map(function ($log) {
+                $details = json_decode($log->details, true);
+                $issuedToFullName = 'Unknown User';
+
+                // Get the issued_to username if it exists
+                if (isset($details['issued_to'])) {
+                    $issuedToUser = User::find($details['issued_to']);
+                    if ($issuedToUser) {
+                        $issuedToFullName = $issuedToUser->firstname . ' ' . $issuedToUser->lastname;
+                    }
                 }
-            }
 
-            // Parse the details string to a proper PHP array
-            $parsedDetails = $details;
-            
-            // Replace the numeric ID with the actual name
-            if (isset($parsedDetails['issued_to'])) {
-                $parsedDetails['issued_to'] = $issuedToFullName;
-            }
+                // Parse the details string to a proper PHP array
+                $parsedDetails = $details;
 
-            if ($log->user) {
-                $fullName = $log->user->firstname . ' ' . $log->user->lastname;
+                // Replace the numeric ID with the actual name
+                if (isset($parsedDetails['issued_to'])) {
+                    $parsedDetails['issued_to'] = $issuedToFullName;
+                }
 
-                return [
-                    'user' => $fullName,
-                    'action' => $log->action,
-                    'details' => $parsedDetails,
-                    'time' => $log->created_at->toDateTimeString(),
-                ];
-            } else {
-                return [
-                    'user' => 'Unknown User',
-                    'action' => $log->action,
-                    'details' => $parsedDetails,
-                    'time' => $log->created_at->toDateTimeString(),
-                ];
-            }
-        });
+                if ($log->user) {
+                    $fullName = $log->user->firstname . ' ' . $log->user->lastname;
 
-        return response()->json(['logs' => $formattedLogs], 200);
-    } catch (\Exception $e) {
-        Log::error('Error fetching asset logs', ['error' => $e->getMessage()]);
+                    return [
+                        'user' => $fullName,
+                        'action' => $log->action,
+                        'details' => $parsedDetails,
+                        'time' => $log->created_at->toDateTimeString(),
+                    ];
+                } else {
+                    return [
+                        'user' => 'Unknown User',
+                        'action' => $log->action,
+                        'details' => $parsedDetails,
+                        'time' => $log->created_at->toDateTimeString(),
+                    ];
+                }
+            });
 
-        return response()->json(['message' => 'Failed to fetch asset logs'], 500);
+            return response()->json(['logs' => $formattedLogs], 200);
+        } catch (\Exception $e) {
+            Log::error('Error fetching asset logs', ['error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Failed to fetch asset logs'], 500);
+        }
     }
-}
-public function logAssetAction($asset, $action, $details, $userId)
-{
-    try {
-        AssetLog::create([
-            'asset_id' => $asset->id,
-            'action' => $action,
-            'details' => $details,
-            'user_id' => $userId,
+    public function logAssetAction($asset, $action, $details, $userId)
+    {
+        try {
+            AssetLog::create([
+                'asset_id' => $asset->id,
+                'action' => $action,
+                'details' => $details,
+                'user_id' => $userId,
+            ]);
+
+            Log::info('Asset action logged successfully', [
+                'asset_id' => $asset->id,
+                'action' => $action,
+                'details' => $details,
+                'user_id' => $userId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error logging asset action', ['error' => $e->getMessage()]);
+        }
+    }
+
+
+    public function upload(Request $request)
+    {
+        Log::info('Upload request received', ['request_data' => $request->all()]);
+
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,ods|max:10240',
         ]);
 
-        Log::info('Asset action logged successfully', [
-            'asset_id' => $asset->id,
-            'action' => $action,
-            'details' => $details,
-            'user_id' => $userId,
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Error logging asset action', ['error' => $e->getMessage()]);
+        try {
+            $import = new AssetImport();
+            Excel::import($import, $request->file('file'));
+
+            $importedData = $import->getImportedData(); // Get parsed data
+            Log::info('File imported successfully', ['imported_data' => $importedData]);
+
+            // return response()->json($importedData);
+
+            $createdAssets = []; // Store created assets for response
+
+            foreach ($importedData as $data) {
+                // Ensure required fields exist before inserting
+                if (!isset($data['serial_no'])) {
+                    Log::warning('Skipping row due to missing serial_no', ['row_data' => $data]);
+                    continue; // Skip invalid rows
+                }
+
+                // Check if asset with the same serial_no already exists
+                if (Asset::where('serial_no', $data['serial_no'])->exists()) {
+                    Log::warning('Skipping existing asset', ['serial_no' => $data['serial_no']]);
+                    continue; // Skip existing assets
+                }
+
+                // Create Asset record
+                $asset = Asset::create($data);
+                $createdAssets[] = $asset;
+
+                // Log asset creation
+                Log::info('Asset created successfully', ['asset' => $asset]);
+                $this->logAssetAction($asset, 'uploaded', json_encode($data), auth()->id());
+            }
+
+            return response()->json([
+                'message' => 'Assets uploaded and created successfully',
+                'created_assets' => $createdAssets,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('File processing error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'error' => 'File processing error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
-
-
-
-
-public function upload(Request $request)
-{
-    $request->validate([
-        'file' => 'required|mimes:xlsx,xls,ods|max:10240',
-    ]);
-
-    $file = $request->file('file');
-
-    try {
-        $import = new AssetImport();
-        Excel::import($import, $file);
-
-        // Access the imported data
-        $importedData = $import->importedData;
-
-        // Return the imported data along with the success message
-        return response()->json([
-            'message' => 'File uploaded successfully',
-            'imported_data' => $importedData,
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-}
-
-
-
-}
-
-
-

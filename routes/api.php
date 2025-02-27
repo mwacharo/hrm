@@ -151,7 +151,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/v1/resources/{asset}/clear', [ResourceApiController::class, 'clearAsset']);
   Route::put('/v1/resources/{asset}/reassign', [ResourceApiController::class, 'reassignAsset']);
   Route::get('v1/resource-logs/{id}', [ResourceApiController::class, 'resourceLogs']);
-  Route::get('v1/resources/import', [ResourceApiController::class, 'upload']);
+  Route::post('v1/resources/import', [ResourceApiController::class, 'upload']);
 
   
 
