@@ -91,11 +91,13 @@
                     </li>
                     <li class="submenu">
                         <a href="javascript:void(0);" data-toggle="collapse" data-target="#tickets-complaints"><i
-                                class="la la-book"></i> <span>Tickets & Complaints</span> <span
+                                class="la la-book"></i> <span>Tickets & Employee Voice</span> <span
                                 class="menu-arrow"></span></a>
                         <ul id="tickets-complaints" class="collapse">
                             <li><a href="/tickets">Tickets</a></li>
-                            <li><a href="/complaints">Complaints</a></li>
+                            <!-- <li><a href="/voice">Employee Voice</a></li> -->
+                            <li><a href="/employee-voice">Employee Voice</a></li>
+
                         </ul>
                     </li>
                     <li class="submenu">
@@ -172,11 +174,11 @@
                     </li>
                     <li class="submenu">
                         <a href="javascript:void(0);" data-toggle="collapse" data-target="#tickets-complaints">
-                            <i class="la la-book"></i> <span>Tickets & Complaints</span> <span
+                            <i class="la la-book"></i> <span>Tickets & Employee Voice</span> <span
                                 class="menu-arrow"></span></a>
                         <ul id="tickets-complaints" class="collapse">
                             <li><a href="/employee-tickets">Tickets</a></li>
-                            <li><a href="/employee-complaints">Complaints</a></li>
+                            <li><a href="/employee-voice">Employee Voice</a></li>
                         </ul>
                     </li>
                     <li>

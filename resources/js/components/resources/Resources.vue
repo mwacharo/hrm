@@ -30,9 +30,9 @@
                 </v-row>
             </v-col>
             <v-col>
+
                 <v-row justify="end" class="text-right">
 
-                    <v-text-field v-model="search" label="Search" clearable @clear="clearSearch"></v-text-field>
                     <v-col cols="auto">
                         <v-btn v-if="roles.includes('admin')" @click="addResource" icon>
                             <v-tooltip activator="parent" location="top">Add Resource</v-tooltip>
@@ -71,8 +71,13 @@
                 </v-row>
             </v-col>
         </v-row>
+        <v-col>
+            <v-text-field v-model="search" label="Search"  prepend-inner-icon="mdi-magnify" clearable @clear="clearSearch"></v-text-field>
+
+        </v-col>
         <v-row>
             <v-responsive>
+                <v-progress-linear v-if="loading" color="primary" indeterminate></v-progress-linear>
 
                 <v-data-table v-model="selected" :headers="headers" :items="resources" item-key="id"
                     class="elevation-10" responsive show-select>
@@ -133,10 +138,7 @@
                             </v-icon>
                         </td>
                     </template>
-
-
                 </v-data-table>
-
             </v-responsive>
         </v-row>
         <v-dialog v-model="dialog" max-width="600px" transition="scale-transition">
@@ -346,6 +348,7 @@ export default {
             logsModal: false,
             logs: [],
             loadingLogs: false,
+            loading: false,
             selectedItemId: null,
             selected: [],
             resources: [],
@@ -403,7 +406,7 @@ export default {
     watch: {
         loading(val) {
             if (!val) return
-            setTimeout(() => (this.loading = false), 2000)
+            setTimeout(() => (this.loading = false), 8000)
         },
     },
 
@@ -516,6 +519,8 @@ export default {
         },
 
         fetchResources(name) {
+            this.loading = true;
+
             let url = '/api/v1/resources';
             if (name) {
                 url += `?name=${name}`;
@@ -527,6 +532,8 @@ export default {
                 })
                 .catch(error => {
                     console.error('Error fetching resources:', error);
+                }).finally(() => {
+                    this.loading = false;
                 });
         },
 

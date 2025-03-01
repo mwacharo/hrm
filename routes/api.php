@@ -166,10 +166,11 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('/v1/ticket-comments/{ticket}', [TicketApiController::class, 'ticketComments']);
 
   //complaints
-  Route::get('/v1/complaints', [ComplaintApiController::class, 'index']);
-  Route::post('/v1/complaints', [ComplaintApiController::class, 'store']);
-  Route::get('/v1/complaints/{complaint}', [ComplaintApiController::class, 'update']);
-  Route::get('/v1/complaints/{complaint}', [ComplaintApiController::class, 'destroy']);
+  Route::get('/v1/voices', [ComplaintApiController::class, 'index']);
+  Route::post('/v1/voices', [ComplaintApiController::class, 'store']);
+  Route::put('/v1/voices/{voice}', [ComplaintApiController::class, 'update']);
+  Route::delete('/v1/voices/{voice}', [ComplaintApiController::class, 'destroy']);
+  
 
   //reports
   Route::post('v1/attendance-report', [ReportApiController::class, 'attendanceReport']);

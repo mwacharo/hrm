@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Complaint extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'subject',
         'description',
@@ -20,19 +23,37 @@ class Complaint extends Model
         'closed_date',
         'attachment',
         'comments',
-        'addressed_to',
+        'assignedTo',
         'resolution',
+        'links',
+        'attachments',
     ];
 
-    public function user(){
+
+    // protected $casts = [
+    //     'attachments' => 'array',
+    //     'links' => 'array',
+    // ];
+
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
-    public function addressedTo(){
-        return $this->belongsTo(User::class, 'addressed_to');
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'complaint_user')->withPivot('role')->withTimestamps();
     }
 
-    // public function assignedTo()
-    // {
-    //     return $this->belongsTo(User::class, 'assigned_to'); // Adjust foreign key if needed
-    // }
+    public function addressedTo(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'complaint_user')
+            ->wherePivot('role', 'addressed_to');
+    }
+
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'complaint_user')
+            ->wherePivot('role', 'follower');
+    }
 }

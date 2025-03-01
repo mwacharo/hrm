@@ -89,7 +89,7 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/employees', [UserController::class, 'index']);
     Route::get('/attendances', [AttendanceController::class, 'index']);
     Route::get('/tickets', [TicketController::class, 'index']);
-    Route::get('/complaints', [ComplaintController::class, 'index']);
+    Route::get('/voice', [ComplaintController::class, 'index']);
     Route::get('/overtime', [OvertimeController::class, 'index']);
     Route::get('/tasks', [TaskController::class, 'index'])->name('projects');
     Route::get('/jobs', [JobController::class, 'index'])->name('jobs');
@@ -124,7 +124,7 @@ Route::middleware(['role:employee'])->group(function () {
     Route::get('/employee-attendance', [AttendanceController::class, 'employeeAttendances']);
     Route::get('/employee-team', [UserController::class, 'employeeTeam']);
     Route::get('/employee-profile', [UserController::class, 'employeeProfile']);
-    Route::get('/employee-complaints', [ComplaintController::class, 'employeeComplaints']);
+    // Route::get('/employee-voice', [ComplaintController::class, 'employeeComplaints']);
     Route::get('/employee-tickets', [TicketController::class, 'employeeTickets']);
     Route::get('/employee-resources', [ResourceController::class, 'employeeResources']);
     Route::get('/employee-payslips', [PayslipController::class, 'employeePayslips']);
@@ -147,6 +147,8 @@ Route::group(['middleware' => ['auth']], function () {
     // requestions
     Route::get('/requisitions', [RequisitionController::class, 'index']);
     Route::get('/resources', [ResourceController::class, 'index']);
+    Route::get('/employee-voice', [ComplaintController::class, 'employeeComplaints']);
+
 
     // impersonate 
     Route::get('/impersonate/{id}', function ($id) {

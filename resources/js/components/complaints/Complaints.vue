@@ -1,3 +1,4 @@
+
 <template>
     <v-container fluid>
         <v-row>
@@ -53,9 +54,9 @@ export default {
                 { title: 'Status', value: 'status' },
                 { title: 'Priority', value: 'priority' },
                 { title: 'Date Opened', value: 'date_opened' },
-                { title: 'Date Closed', value: 'closed_date' },
                 { title: 'Attachment', value: 'attachment' },
                 { title: 'Addressee', value: 'addressed_to' },
+                { title: 'Date Closed', value: 'closed_date' },
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
             editedIndex: -1,

@@ -4,7 +4,7 @@
         <div class="col">
             <ul class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Complaints</li>
+                <li class="breadcrumb-item active">Employee Voice</li>
             </ul>
         </div>
     </div>

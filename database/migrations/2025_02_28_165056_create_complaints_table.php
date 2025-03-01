@@ -12,20 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('complaints', function (Blueprint $table) {
+          
+
             $table->id();
             $table->string('subject');
             $table->text('description')->nullable();
             $table->boolean('is_anonymous')->default(true);
-            $table->foreignId('user_id')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('category')->nullable();
             $table->string('status')->default('Open');
             $table->string('priority')->nullable();
             $table->date('date_opened')->nullable();
             $table->date('closed_date')->nullable();
-            $table->string('attachment')->nullable();
             $table->text('comments')->nullable();
-            $table->foreignId('addressed_to')->nullable()->constrained('users')->onDelete('set null');
             $table->text('resolution')->nullable();
+            $table->json('attachments')->nullable();
+            $table->json('links')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -96,9 +96,15 @@ class User extends Authenticatable
     return $this->hasMany(Attendance::class);
   }
 
-  public function complaints()
+  public function complaint()
   {
     return $this->hasMany(Complaint::class);
+  }
+
+
+  public function complaints()
+  {
+      return $this->belongsToMany(Complaint::class, 'complaint_user')->withPivot('role')->withTimestamps();
   }
 
   public function tickets()
@@ -206,5 +212,21 @@ class User extends Authenticatable
   //  {
   //      return "{$this->firstname} {$this->lastname}";
   //  }
+
+
+
+   // Many-to-Many: Complaints where the user is addressed
+   public function addressedComplaints()
+   {
+       return $this->belongsToMany(Complaint::class, 'complaint_user')
+                   ->wherePivot('role', 'addressed_to');
+   }
+
+   // Many-to-Many: Complaints where the user is a follower
+   public function followedComplaints()
+   {
+       return $this->belongsToMany(Complaint::class, 'complaint_user')
+                   ->wherePivot('role', 'follower');
+   }
 
 }
