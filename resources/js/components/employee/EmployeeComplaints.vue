@@ -241,7 +241,7 @@
                                     multiple accept=".pdf, .doc, .docx, .png" outlined clearable
                                     @change="logAttachments"></v-file-input>
                                 <div v-if="attachments && attachments.length > 0">
-                                    <v-chip v-for="(file, index) in editedVoice.attachments" :key="index" class="ma-2"
+                                    <v-chip v-for="(file, index) in attachments" :key="index" class="ma-2"
                                         close @click:close="removeAttachment(index)">
                                         {{ file.name }}
                                     </v-chip>
@@ -298,15 +298,16 @@ export default {
                 { title: 'Subject', value: 'subject' },
                 { title: 'Description', value: 'description' },
                 { title: 'Category', value: 'category' },
-                { title: 'Status', value: 'status' },
-                { title: 'Priority', value: 'priority' },
+                // { title: 'Priority', value: 'priority' },
                 // { title: 'Date Opened', value: 'created_at' },
                 { title: 'Attachments', value: 'attachments' },
                 { title: 'Links', value: 'links' },
                 { title: 'Addressee', value: 'addressed_to' },
                 { title: 'Followers', value: 'followers' },
                 { title: 'Comments', value: 'comments' },
-                { title: 'Resolution', value: 'resolution' },
+                { title: 'Status', value: 'status' },
+
+                // { title: 'Resolution', value: 'resolution' },
                 { title: 'Creation Date', value: 'created_at' },
                 { title: 'Actions', value: 'actions', sortable: false },
             ],
@@ -322,7 +323,7 @@ export default {
     },
     computed: {
         formTitle() {
-            return this.editedIndex === -1 ? 'Create Voice' : 'Edit Voice';
+            return this.editedIndex === -1 ? 'Make Suggestion' : 'Edit Suggestion';
         }
     },
     created() {
@@ -337,12 +338,19 @@ export default {
         },
 
 
+        // logAttachments(attachments) {
+        //     console.log('logAttachments called with:', attachments);
+        //     if (attachments) {
+        //         this.attachments = Array.isArray(attachments) ? [...attachments] : [attachments];
+        //         console.log('Updated attachments:', this.attachments);
+        //     }
+
         logAttachments(attachments) {
-            console.log('logAttachments called with:', attachments);
-            if (attachments) {
-                this.attachments = Array.isArray(attachments) ? [...attachments] : [attachments];
-                console.log('Updated attachments:', this.attachments);
-            }
+    console.log('logAttachments called with:', attachments);
+    if (attachments) {
+        this.attachments = Array.isArray(attachments) ? [...attachments] : [attachments];
+        console.log('Updated attachments:', this.attachments);
+    }
         },
         removeAttachment(index) {
             console.log('removeAttachment called with index:', index);
@@ -441,7 +449,7 @@ export default {
         },
         saveVoice() {
             if (!this.validateForm()) {
-                return;
+            return;
             }
 
             const formData = new FormData();
@@ -458,64 +466,61 @@ export default {
 
             // Handle array values correctly
             if (this.editedVoice.assigned_to && this.editedVoice.assigned_to.length) {
-                this.editedVoice.assigned_to.forEach(assignee => {
-                    formData.append('assigned_to[]', assignee);
-                    console.log('Appending assigned_to:', assignee);
-                });
+            this.editedVoice.assigned_to.forEach(assignee => {
+                formData.append('assigned_to[]', assignee);
+                console.log('Appending assigned_to:', assignee);
+            });
             }
 
             if (this.editedVoice.followers && this.editedVoice.followers.length) {
-                this.editedVoice.followers.forEach(follower => {
-                    formData.append('followers[]', follower);
-                    console.log('Appending follower:', follower);
-                });
+            this.editedVoice.followers.forEach(follower => {
+                formData.append('followers[]', follower);
+                console.log('Appending follower:', follower);
+            });
             }
 
             formData.append('is_anonymous', this.editedVoice.is_anonymous ? 1 : 0);
             console.log('Appending is_anonymous:', this.editedVoice.is_anonymous ? 1 : 0);
 
-            //    appending mutiple files to the form data
-            if (this.editedVoice.attachements && this.editedVoice.attachements.length > 0) {
-                const file = this.editedVoice.attachements; // Get the files from the array
-                console.log('Appending file:', file);
-                formData.append('attachements', file);
+            if (this.attachments && this.attachments.length > 0) {
+            const file = this.attachments[0];
+            console.log('Appending file:', file);
+            formData.append('attachments', file);
             } else {
-                console.log('No file selected');
+            console.log('No file selected');
             }
 
-
             if (this.editedVoice.links && this.editedVoice.links.length) {
-                this.editedVoice.links.forEach(link => {
-                    formData.append('links[]', link);
-                    console.log('Appending link:', link);
-                });
+            this.editedVoice.links.forEach(link => {
+                formData.append('links[]', link);
+                console.log('Appending link:', link);
+            });
             }
 
             this.loading = true;
             const url = this.editedIndex === -1
-                ? `${this.base_url}api/v1/voices`
-                : `${this.base_url}api/v1/voices/${this.editedVoice.id}`;
+            ? `${this.base_url}api/v1/voices`
+            : `${this.base_url}api/v1/voices/${this.editedVoice.id}`;
 
             const method = this.editedIndex === -1 ? 'post' : 'put';
 
             axios[method](url, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
             })
-                .then(response => {
-                    this.loading = false;
-                    this.showSuccess('Voice saved successfully');
-                    this.closeDialog();
-                    this.fetchVoices(); // Refresh the list
-                })
-                .catch(error => {
-                    this.loading = false;
-                    console.error('Error saving voice:', error);
-                    this.showError('Failed to save voice. Please try again.');
-                });
-        },
-        openStatusDialog(item, field) {
+            .then(response => {
+                this.loading = false;
+                this.showSuccess('Voice saved successfully');
+                this.closeDialog();
+                this.fetchVoices(); // Refresh the list
+            })
+            .catch(error => {
+                this.loading = false;
+                console.error('Error saving voice:', error);
+                this.showError('Failed to save voice. Please try again.');
+            });
+        },openStatusDialog(item, field) {
             this.editedVoice = item;
             this.dialogField = field;
             this.statusDialog = true;
@@ -597,3 +602,9 @@ export default {
     }
 };
 </script>
+
+
+
+
+
+
