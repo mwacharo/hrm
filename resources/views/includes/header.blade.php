@@ -6,7 +6,7 @@
     </div>
     <a id="mobile_btn" class="mobile_btn" href="#sidebar"><i class="fa fa-bars"></i></a>
     <ul class="nav user-menu d-none d-lg-flex align-items-center">
-        
+
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center" id="navbarDropdownUserImage" href="#"
                 role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -25,7 +25,8 @@
                     </span>
                     <div class="dropdown-user-details">
                         <div class="dropdown-user-details-name fw-bold">{{ auth()->user()->firstname ?? '' }}
-                            {{ auth()->user()->lastname ?? '' }}</div>
+                            {{ auth()->user()->lastname ?? '' }}
+                        </div>
                         <div class="dropdown-user-details-email text-muted">{{ auth()->user()->email ?? '' }}</div>
                     </div>
                 </div>
@@ -38,7 +39,11 @@
                     <button class="dropdown-item" type="submit">
                         <i class="fa fa-sign-out me-2"></i> Logout
                     </button>
+
+                  
+
                 </form>
+
             </div>
         </li>
     </ul>

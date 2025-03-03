@@ -70,6 +70,7 @@ import Complaints from './components/complaints/Complaints.vue'
 import Requisition from './components/requisitions/Requisition.vue'
 import Permissions from './components/permissions/Permissions.vue'
 import Roles from './components/roles/Roles.vue'
+import PerformanceEvaluation from './components/performance/PerformanceEvaluation.vue'
 
 
 
@@ -123,6 +124,7 @@ app.component('appraisals', Appraisals)
 app.component('requisition',Requisition)
 app.component('permissions',Permissions)
 app.component('roles',Roles)
+app.component('performance-evaluation',PerformanceEvaluation)
 
 
 app.mount('#app')

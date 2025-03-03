@@ -87,6 +87,8 @@
                             <li><a href="/awards">Awards</a></li>
                             <li><a href="/award-types">Award Types</a></li>
                             <li><a href="/appraisals">Appraisals </a></li>
+                            <li><a href="/performance-evaluations">Evaluations </a></li>
+                            
                         </ul>
                     </li>
                     <li class="submenu">
@@ -179,6 +181,20 @@
                         <ul id="tickets-complaints" class="collapse">
                             <li><a href="/employee-tickets">Tickets</a></li>
                             <li><a href="/employee-voice">Employee Voice</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="submenu">
+                        <a href="javascript:void(0);" data-toggle="collapse" data-bs-target="#performance"><i
+                                class="la la-bar-chart"></i>
+                            <span>Performance</span> <span class="menu-arrow"></span></a>
+                        <ul id="performance" class="collapse">
+                            <!-- <li><a href="/telesales-report">Telesales report</a></li>
+                            <li><a href="/awards">Awards</a></li>
+                            <li><a href="/award-types">Award Types</a></li>
+                            <li><a href="/appraisals">Appraisals </a></li> -->
+                            <li><a href="/performance-evaluations">Evaluations </a></li>
+                            
                         </ul>
                     </li>
                     <li>

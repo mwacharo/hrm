@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\PermissionApiController;
 use App\Http\Controllers\Api\DesignationApiController;
 // use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\DisciplinaryApiController;
+use App\Http\Controllers\Api\PerformanceApiEvaluation;
 use App\Http\Controllers\Api\RequisitionApiController;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -221,6 +222,14 @@ Route::delete('v1/delete-requisition/{id}', [RequisitionApiController::class, 'd
 
 Route::get('v1/requisitions-logs/{id}', [RequisitionApiController::class, 'requisitionLogs']);
 Route::get('v1/requisitions/{id}/pdf', [RequisitionApiController::class, 'generatePdf']);
+
+
+
+// performance evalution
+Route::get('v1/performance-evaluations', [PerformanceApiEvaluation::class, 'index']);
+Route::post('v1/performance-evaluations', [PerformanceApiEvaluation::class, 'store']);
+Route::put('v1/performance-evaluations/{id}', [PerformanceApiEvaluation::class, 'update']);
+Route::delete('v1/performance-evaluations/{id}', [PerformanceApiEvaluation::class, 'destroy']);
 
 
 

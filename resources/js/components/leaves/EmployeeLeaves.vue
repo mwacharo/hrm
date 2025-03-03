@@ -455,27 +455,27 @@ export default {
         formData.append('comment', this.newLeave.comment);
 
 
-//         if (this.newLeave.document) {
-//   console.log('Document type:', typeof this.newLeave.document);
-//   console.log('Document is File?', this.newLeave.document instanceof File);
-//   console.log('Document:', this.newLeave.document);
-  
-//   // Only append if it's actually a File object
-//   if (this.newLeave.document instanceof File) {
-//     formData.append('document', this.newLeave.document);
-//   } else {
-//     console.error('Invalid document type');
-//     return; // Don't submit if document isn't a valid File
-//   }
-// }
+        //         if (this.newLeave.document) {
+        //   console.log('Document type:', typeof this.newLeave.document);
+        //   console.log('Document is File?', this.newLeave.document instanceof File);
+        //   console.log('Document:', this.newLeave.document);
 
-if (this.newLeave.document && this.newLeave.document.length > 0) {
-  const file = this.newLeave.document[0]; // Get the first file from the array
-  console.log('Appending file:', file);
-  formData.append('document', file);
-} else {
-  console.log('No file selected');
-}
+        //   // Only append if it's actually a File object
+        //   if (this.newLeave.document instanceof File) {
+        //     formData.append('document', this.newLeave.document);
+        //   } else {
+        //     console.error('Invalid document type');
+        //     return; // Don't submit if document isn't a valid File
+        //   }
+        // }
+
+        if (this.newLeave.document && this.newLeave.document.length > 0) {
+          const file = this.newLeave.document[0]; // Get the first file from the array
+          console.log('Appending file:', file);
+          formData.append('document', file);
+        } else {
+          console.log('No file selected');
+        }
         axios.post('/api/v1/leaves', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -489,7 +489,7 @@ if (this.newLeave.document && this.newLeave.document.length > 0) {
             this.createLeaveModal = false;
           })
           .catch(error => {
-        this.isLoading = false;
+            this.isLoading = false;
             if (error.response && error.response.data && error.response.data.error) {
               this.$toastr.error(error.response.data.error);
             } else {

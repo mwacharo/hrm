@@ -106,10 +106,14 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/leave-analytics', [LeaveController::class, 'leaveAnalytics'])->name('leaveAnalytics');
     Route::get('/attendance-report', [ReportController::class, 'attendance']);
     Route::get('/leave-report', [ReportController::class, 'leave']);
+
+
     Route::get('/telesales-report', [PerformanceController::class, 'telesalesReport']);
     Route::get('/awards', [PerformanceController::class, 'awards']);
     Route::get('/award-types', [PerformanceController::class, 'awardTypes']);
     Route::get('/appraisals', [PerformanceController::class, 'appraisals']);
+    // 
+    // Route::get('/performance-evaluations', [PerformanceController::class, 'performanceEvaluations'])->name('performance-evaluations');
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/permissions', [PermissionController::class, 'index']);
@@ -148,6 +152,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/requisitions', [RequisitionController::class, 'index']);
     Route::get('/resources', [ResourceController::class, 'index']);
     Route::get('/employee-voice', [ComplaintController::class, 'employeeComplaints']);
+
+    // performance
+    Route::get('/performance-evaluations', [PerformanceController::class, 'performanceEvaluations'])->name('performance-evaluations');
+
 
 
     // impersonate 

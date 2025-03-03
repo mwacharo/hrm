@@ -17,7 +17,12 @@
 
 @section('content')
 
-<employee-account :user="{{ json_encode($user) }}"/>
+<employee-account 
+
+:user="{{ json_encode($user) }}" 
+        :roles="{{ json_encode($roles) }}" 
+        :permissions="{{ json_encode($permissions) }}" 
+/>
 @endsection
 
 
