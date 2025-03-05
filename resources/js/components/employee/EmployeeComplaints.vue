@@ -7,10 +7,10 @@
                     <v-data-table :headers="headers" :items="voices" item-key="id" class="elevation-1" show-select>
                         <template v-slot:top>
                             <!-- <v-toolbar flat color="primary"> -->
-                                <v-col class="d-flex justify-end">
+                            <v-col class="d-flex justify-end">
                                 <v-btn class="mr-4" color="primary" @click="openDialog">Make Suggestion</v-btn>
                             </v-col>
-                                
+
                             <!-- </v-toolbar> -->
                         </template>
 
@@ -21,7 +21,7 @@
 
                         <template v-slot:item.comments="{ item }">
                             <v-chip :color="getStatusColor(item.status)" dark
-                                @click="openStatusDialog(item, 'comment')">{{ item.comments }}</v-chip>
+                                @click="openStatusDialog(item, 'comments')">{{ item.comments }}</v-chip>
                         </template>
 
                         <template v-slot:item.resolution="{ item }">
@@ -59,8 +59,8 @@
                     <v-select v-if="dialogField === 'priority'" v-model="editedVoice.priority"
                         :items="['High', 'Medium', 'Low']" label="Priority"
                         :rules="[v => !!v || 'Priority is required']"></v-select>
-                    <v-textarea v-if="dialogField === 'comment'" v-model="editedVoice.comment" label="Comment"
-                        :rules="[v => !!v || 'Comment is required']"></v-textarea>
+                    <v-textarea v-if="dialogField === 'comments'" v-model="editedVoice.comments" label="Comments"
+                        :rules="[v => !!v || 'Comments is required']"></v-textarea>
                     <v-textarea v-if="dialogField === 'resolution'" v-model="editedVoice.resolution" label="Resolution"
                         :rules="[v => !!v || 'Resolution is required']"></v-textarea>
                 </v-card-text>
@@ -72,7 +72,7 @@
             </v-card>
         </v-dialog>
 
-        <!-- dialog to view voice shows the history of the leave -->
+        <!-- dialog to view voice shows the history of the voice -->
         <v-dialog v-model="viewVoiceDialog" max-width="800px">
             <v-card>
                 <v-card-title>
@@ -239,10 +239,10 @@
                             <v-col>
                                 <v-file-input ref="fileInput" v-model="attachments" label="Attach Documents (Optional)"
                                     multiple accept=".pdf, .doc, .docx, .png" outlined clearable
-                                    @change="logAttachments"></v-file-input>
+                                    @change="handleFileUpload"></v-file-input>
                                 <div v-if="attachments && attachments.length > 0">
-                                    <v-chip v-for="(file, index) in attachments" :key="index" class="ma-2"
-                                        close @click:close="removeAttachment(index)">
+                                    <v-chip v-for="(file, index) in attachments" :key="index" class="ma-2" close
+                                        @click:close="removeAttachment(index)">
                                         {{ file.name }}
                                     </v-chip>
                                 </div>
@@ -332,26 +332,42 @@ export default {
     },
     methods:
     {
+
+        updateField() {
+            const field = this.dialogField;
+            if (!field) return;
+
+            const updatedVoice = { ...this.editedVoice };
+
+            axios.put(`${this.base_url}api/v1/voices/${updatedVoice.id}`, {
+            [field]: updatedVoice[field]
+            })
+            .then(response => {
+            this.showSuccess(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
+            this.statusDialog = false;
+            this.fetchVoices(); 
+            })
+            .catch(error => {
+            console.error(`Error updating ${field}:`, error);
+            this.showError(`Failed to update ${field}. Please try again.`);
+            });
+        },
         openconfirmDeleteDialog(item) {
             this.editedVoice = item;
             this.confirmDeleteDialog = true;
         },
 
 
-        // logAttachments(attachments) {
-        //     console.log('logAttachments called with:', attachments);
-        //     if (attachments) {
-        //         this.attachments = Array.isArray(attachments) ? [...attachments] : [attachments];
-        //         console.log('Updated attachments:', this.attachments);
-        //     }
 
-        logAttachments(attachments) {
-    console.log('logAttachments called with:', attachments);
-    if (attachments) {
-        this.attachments = Array.isArray(attachments) ? [...attachments] : [attachments];
-        console.log('Updated attachments:', this.attachments);
-    }
-        },
+        handleFileUpload(file) {
+            if (file instanceof File) {
+                console.log('Valid file selected:', file);
+                this.attachments = file;  // Store correctly
+            } else {
+                console.error('Invalid file selected:', file);
+            }
+        }
+        ,
         removeAttachment(index) {
             console.log('removeAttachment called with index:', index);
             this.attachments.splice(index, 1);
@@ -449,9 +465,8 @@ export default {
         },
         saveVoice() {
             if (!this.validateForm()) {
-            return;
+                return;
             }
-
             const formData = new FormData();
             formData.append('subject', this.editedVoice.subject);
             console.log('Appending subject:', this.editedVoice.subject);
@@ -466,61 +481,65 @@ export default {
 
             // Handle array values correctly
             if (this.editedVoice.assigned_to && this.editedVoice.assigned_to.length) {
-            this.editedVoice.assigned_to.forEach(assignee => {
-                formData.append('assigned_to[]', assignee);
-                console.log('Appending assigned_to:', assignee);
-            });
+                this.editedVoice.assigned_to.forEach(assignee => {
+                    formData.append('assigned_to[]', assignee);
+                    console.log('Appending assigned_to:', assignee);
+                });
             }
 
             if (this.editedVoice.followers && this.editedVoice.followers.length) {
-            this.editedVoice.followers.forEach(follower => {
-                formData.append('followers[]', follower);
-                console.log('Appending follower:', follower);
-            });
+                this.editedVoice.followers.forEach(follower => {
+                    formData.append('followers[]', follower);
+                    console.log('Appending follower:', follower);
+                });
             }
 
             formData.append('is_anonymous', this.editedVoice.is_anonymous ? 1 : 0);
             console.log('Appending is_anonymous:', this.editedVoice.is_anonymous ? 1 : 0);
 
             if (this.attachments && this.attachments.length > 0) {
-            const file = this.attachments[0];
-            console.log('Appending file:', file);
-            formData.append('attachments', file);
+                formData.append('attachments', this.attachments[0]); // Only append the first file
+                console.log('Appending first file:', this.attachments[0]);
             } else {
-            console.log('No file selected');
+                console.log('No file selected');
             }
 
             if (this.editedVoice.links && this.editedVoice.links.length) {
-            this.editedVoice.links.forEach(link => {
-                formData.append('links[]', link);
-                console.log('Appending link:', link);
-            });
+                this.editedVoice.links.forEach(link => {
+                    formData.append('links[]', link);
+                    console.log('Appending link:', link);
+                });
+            }
+
+            // Log the entire FormData object
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
             }
 
             this.loading = true;
             const url = this.editedIndex === -1
-            ? `${this.base_url}api/v1/voices`
-            : `${this.base_url}api/v1/voices/${this.editedVoice.id}`;
+                ? `${this.base_url}api/v1/voices`
+                : `${this.base_url}api/v1/voices/${this.editedVoice.id}`;
 
             const method = this.editedIndex === -1 ? 'post' : 'put';
 
             axios[method](url, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             })
-            .then(response => {
-                this.loading = false;
-                this.showSuccess('Voice saved successfully');
-                this.closeDialog();
-                this.fetchVoices(); // Refresh the list
-            })
-            .catch(error => {
-                this.loading = false;
-                console.error('Error saving voice:', error);
-                this.showError('Failed to save voice. Please try again.');
-            });
-        },openStatusDialog(item, field) {
+                .then(response => {
+                    this.loading = false;
+                    this.showSuccess('Voice saved successfully');
+                    this.closeDialog();
+                    this.fetchVoices(); // Refresh the list
+                })
+                .catch(error => {
+                    this.loading = false;
+                    console.error('Error saving voice:', error);
+                    this.showError('Failed to save voice. Please try again.');
+                });
+        }, openStatusDialog(item, field) {
             this.editedVoice = item;
             this.dialogField = field;
             this.statusDialog = true;
@@ -602,12 +621,3 @@ export default {
     }
 };
 </script>
-
-
-
-
-
-
-
-
-

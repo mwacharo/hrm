@@ -167,7 +167,7 @@
 
 
         <!-- Request Modal with Steppers -->
-        <v-dialog v-model="requestModal" max-width="800px">
+        <v-dialog v-model="requestModal" :max-width="(step===1) ? 1500 : 800" persistent>
           <v-card>
             <v-stepper v-model="step" :items="items" show-actions>
               <!-- Stepper Items -->
@@ -263,7 +263,7 @@ export default {
 
   data() {
     return {
-
+      modalWidth: 1500,
       step: 1,
       items: [
         'Requisition Items ',

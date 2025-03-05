@@ -652,7 +652,10 @@ class LeaveApiController extends Controller
       'manager' => 'required|exists:users,id',
       'document' => 'nullable|file|mimes:pdf,doc,docx',
     ]);
+      
 
+    // $test=$request->all();
+    // dd($test);
     Log::info('Validation passed');
 
     $startDate = new DateTime($request->from);

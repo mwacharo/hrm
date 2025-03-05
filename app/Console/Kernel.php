@@ -8,40 +8,39 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Log;
 
+
 class Kernel extends ConsoleKernel
 {
-    /**
-     * Define the application's command schedule.
-     */
-    // protected function schedule(Schedule $schedule): void
-    // {
-    //     // $schedule->command('inspire')->hourly();
-    // }
+   
+    protected function schedule(Schedule $schedule)
+    {
+        Log::info("Schedule is running...");
 
-
-    /**
-     * Define the application's command schedule.
-     */
+        $schedule->call(function () {
+            Leave::where('to', '<', now())->update(['is_active' => false]);
+        })->daily();
 
 
 
-     protected function schedule(Schedule $schedule)
-     {
-         Log::info("Schedule is running...");
-         
-         $schedule->call(function () {
-             Leave::where('to', '<', now())->update(['is_active' => false]);
-         })->daily();
-     
-         $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance)->everyTwoMinutes()
-             ->onSuccess(function () {
-                 Log::info("AddMonthlyLeaveBalance job dispatched successfully.");
-             })
-             ->onFailure(function (\Throwable $exception) { // Explicitly define \Throwable
-                 Log::error("Failed to dispatch job: " . $exception->getMessage());
-             });
-     }
-     
+         $schedule->command('leave:reminder')->dailyAt('07:30');
+         $schedule->command('leave:reminder')->dailyAt('16:30')
+            ->before(function () {
+                Log::info("leave:reminder command is about to run...");
+            })
+            ->after(function () {
+                Log::info("leave:reminder command has executed.");
+            });
+
+        $schedule->job(new \App\Jobs\AddMonthlyLeaveBalance)->monthlyOn(1, '00:00') // Runs on the 1st day of each month at midnight
+
+            ->onSuccess(function () {
+                Log::info("AddMonthlyLeaveBalance job dispatched successfully.");
+            })
+            ->onFailure(function (\Throwable $exception) { // Explicitly define \Throwable
+                Log::error("Failed to dispatch job: " . $exception->getMessage());
+            });
+    }
+
 
 
 

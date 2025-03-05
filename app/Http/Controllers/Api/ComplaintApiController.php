@@ -21,10 +21,10 @@ class ComplaintApiController extends Controller
         $status = $request->query('status');
         $category = $request->query('category');
         $priority = $request->query('priority');
-    
+
         // Load related users: creator, addressedTo, and followers
         $query = Complaint::with(['user', 'addressedTo', 'followers']);
-    
+
         // Apply filters
         if ($userId) {
             $query->where('user_id', $userId);
@@ -38,7 +38,7 @@ class ComplaintApiController extends Controller
         if ($priority) {
             $query->where('priority', $priority);
         }
-    
+
         // Fetch and map the complaints
         $complaints = $query->get()->map(function ($complaint) {
             return [
@@ -59,170 +59,193 @@ class ComplaintApiController extends Controller
                 'created_at' => $complaint->created_at ? Carbon::parse($complaint->created_at)->format('D d M Y H:i') : null,
                 'updated_at' => $complaint->updated_at ? Carbon::parse($complaint->updated_at)->format('D d M Y H:i') : null,
                 'deleted_at' => $complaint->deleted_at,
-    
+
                 // Get the full name of the creator
                 'created_by' => $complaint->user ? $complaint->user->firstname . ' ' . $complaint->user->lastname : null,
-    
+
                 // Get all assigned users as an array of full names
-                'addressed_to' => $complaint->addressedTo->map(fn ($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
-    
+                'addressed_to' => $complaint->addressedTo->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
+
                 // Get all followers as an array of full names
-                'followers' => $complaint->followers->map(fn ($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
+                'followers' => $complaint->followers->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
             ];
         });
-    
+
         return response()->json(['complaints' => $complaints], Response::HTTP_OK);
     }
 
+    // public function store(Request $request)
+    // {
+    //     $res= $request->all();
+
+    //     Log::info('Complaint request received.', ['request' => $request->all()]);
+    //      dd($res);
+    //     // Validate the request including attachments
+    //     $data = $this->validateComplaint($request);
+    //     $data['status'] = 'Open';
+    //     $data['priority'] = 'Medium'; 
+
+    //     $attachments = [];
+    //     if ($request->hasFile('attachments')) {
+    //         $attachments = [];
+    //         foreach ($request->file('attachments') as $file) {
+    //             if ($file->isValid()) {
+    //                 $path = $file->store('complaints', 'public');
+    //                 $attachments[] = $path;
+    //             }
+    //         }
+
+    //         if (!empty($attachments)) {
+    //             $data['attachments'] = json_encode($attachments);
+    //         }
+    //     }
+
+    //     // Log the attachments
+    //     Log::info('Attachments Stored:', ['attachments' => $attachments]);
+
+
+    //     // Create the complaint
+    //     $complaint = Complaint::create($data);
+
+    //     // Attach Assigned Users (Role: addressed_to)
+    //     if ($request->has('assigned_to')) {
+    //         $complaint->users()->syncWithoutDetaching(
+    //             collect($request->assigned_to)->mapWithKeys(function ($userId) {
+    //                 return [$userId => ['role' => 'addressed_to']];
+    //             })->toArray()
+    //         );
+    //         Log::info('Assigned users added.', ['complaint_id' => $complaint->id, 'users' => $request->assigned_to]);
+    //     }
+
+    //     // Attach Followers (Role: follower)
+    //     if ($request->has('followers')) {
+    //         $complaint->users()->syncWithoutDetaching(
+    //             collect($request->followers)->mapWithKeys(function ($userId) {
+    //                 return [$userId => ['role' => 'follower']];
+    //             })->toArray()
+    //         );
+    //         Log::info('Follower users added.', ['complaint_id' => $complaint->id, 'users' => $request->followers]);
+    //     }
+
+
+    //     // Send email to assigned user
+    //     if ($request->assigned_to) {
+    //         $assignedToUsers = User::whereIn('id', $request->assigned_to)->get();
+    //         foreach ($assignedToUsers as $addressedToUser) {
+    //             Mail::to($addressedToUser->email)->send(new ComplaintNotification($complaint, $addressedToUser));
+    //         }
+    //     }
+
+    //     if ($request->followers) {
+    //         $followerUsers = User::whereIn('id', $request->followers)->get();
+    //         foreach ($followerUsers as $followerUser) {
+    //             Mail::to($followerUser->email)->send(new ComplaintNotification($complaint, $followerUser));
+    //         }
+    //     }
+
+    //     return response()->json(['complaint' => $complaint], Response::HTTP_CREATED);
+    // }
+
+
+
+
+
     public function store(Request $request)
     {
-        $res= $request->all();
-
         Log::info('Complaint request received.', ['request' => $request->all()]);
-        dd($res);
-        // Validate the request including attachments
-        $data = $this->validateComplaint($request);
-        $data['status'] = 'Open';
-        $data['priority'] = 'Medium'; 
 
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
+        try {
+            // Validate the request including attachments
+            $data = $this->validateComplaint($request);
+            $data['status'] = 'Open';
+            $data['priority'] = 'Medium';
+
+            // Handle attachments
+            // $attachments = [];
+            // if ($request->hasFile('attachments')) {
+            //     foreach ((array) $request->file('attachments') as $file) {
+            //         if ($file->isValid()) {
+            //             $path = $file->store('complaints', 'public');
+            //             $attachments[] = $path;
+            //         }
+            //     }
+            // Handle a single attachment
             $attachments = [];
-            foreach ($request->file('attachments') as $file) {
+            if ($request->hasFile('attachments')) {
+                $file = $request->file('attachments');
                 if ($file->isValid()) {
                     $path = $file->store('complaints', 'public');
                     $attachments[] = $path;
                 }
             }
-        
+
+
+
+            // Store attachments in JSON format if available
             if (!empty($attachments)) {
                 $data['attachments'] = json_encode($attachments);
             }
-        }
-        
-        // Log the attachments
-        Log::info('Attachments Stored:', ['attachments' => $attachments]);
-        
 
-        // Create the complaint
-        $complaint = Complaint::create($data);
+            // Log stored attachments
+            Log::info('Attachments Stored:', ['attachments' => $attachments]);
 
-        // Attach Assigned Users (Role: addressed_to)
-        if ($request->has('assigned_to')) {
-            $complaint->users()->syncWithoutDetaching(
-                collect($request->assigned_to)->mapWithKeys(function ($userId) {
-                    return [$userId => ['role' => 'addressed_to']];
-                })->toArray()
-            );
-            Log::info('Assigned users added.', ['complaint_id' => $complaint->id, 'users' => $request->assigned_to]);
-        }
+            // Create the complaint
+            $complaint = Complaint::create($data);
+            Log::info('Complaint created successfully.', ['complaint_id' => $complaint->id]);
 
-        // Attach Followers (Role: follower)
-        if ($request->has('followers')) {
-            $complaint->users()->syncWithoutDetaching(
-                collect($request->followers)->mapWithKeys(function ($userId) {
-                    return [$userId => ['role' => 'follower']];
-                })->toArray()
-            );
-            Log::info('Follower users added.', ['complaint_id' => $complaint->id, 'users' => $request->followers]);
-        }
-
-
-        // Send email to assigned user
-        if ($request->assigned_to) {
-            $assignedToUsers = User::whereIn('id', $request->assigned_to)->get();
-            foreach ($assignedToUsers as $addressedToUser) {
-                Mail::to($addressedToUser->email)->send(new ComplaintNotification($complaint, $addressedToUser));
+            // Attach Assigned Users (Role: addressed_to)
+            if ($request->filled('assigned_to')) {
+                $complaint->users()->syncWithoutDetaching(
+                    collect($request->assigned_to)->mapWithKeys(fn($userId) => [$userId => ['role' => 'addressed_to']])
+                );
+                Log::info('Assigned users added.', ['complaint_id' => $complaint->id, 'users' => $request->assigned_to]);
             }
-        }
 
-        if ($request->followers) {
-            $followerUsers = User::whereIn('id', $request->followers)->get();
-            foreach ($followerUsers as $followerUser) {
-                Mail::to($followerUser->email)->send(new ComplaintNotification($complaint, $followerUser));
+            // Attach Followers (Role: follower)
+            if ($request->filled('followers')) {
+                $complaint->users()->syncWithoutDetaching(
+                    collect($request->followers)->mapWithKeys(fn($userId) => [$userId => ['role' => 'follower']])
+                );
+                Log::info('Follower users added.', ['complaint_id' => $complaint->id, 'users' => $request->followers]);
             }
-        }
 
-        return response()->json(['complaint' => $complaint], Response::HTTP_CREATED);
+            // Send email notifications
+            $this->sendComplaintNotifications($request, $complaint);
+
+            return response()->json(['complaint' => $complaint], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            Log::error('Error storing complaint:', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'An error occurred while submitting the complaint.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
 
 
+    private function sendComplaintNotifications(Request $request, Complaint $complaint)
+    {
+        if ($request->filled('assigned_to')) {
+            $assignedToUsers = User::whereIn('id', $request->assigned_to)->get();
+            foreach ($assignedToUsers as $user) {
+                Mail::to($user->email)->send(new ComplaintNotification($complaint, $user));
+            }
+            Log::info('Emails sent to assigned users.', ['users' => $request->assigned_to]);
+        }
+
+        if ($request->filled('followers')) {
+            $followerUsers = User::whereIn('id', $request->followers)->get();
+            foreach ($followerUsers as $user) {
+                Mail::to($user->email)->send(new ComplaintNotification($complaint, $user));
+            }
+            Log::info('Emails sent to followers.', ['users' => $request->followers]);
+        }
+    }
 
 
-//     public function store(Request $request)
-// {
-//     // More detailed logging to troubleshoot
-//     Log::info('Raw request data:', [
-//         'all' => $request->all(),
-//         'files_present' => $request->hasFile('attachments'),
-//         'files_count' => $request->hasFile('attachments') ? count($request->file('attachments')) : 0,
-//         'content_type' => $request->header('Content-Type')
-//     ]);
-    
-//     // Validate the request
-//     $data = $this->validateComplaint($request);
-//     $data['status'] = 'Open';
-//     $data['priority'] = 'Medium';
-    
-//     // Handle file attachments with better error checking
-//     $attachments = [];
-//     try {
-//         if ($request->hasFile('attachments')) {
-//             foreach ($request->file('attachments') as $index => $file) {
-//                 Log::info("Processing file {$index}", [
-//                     'valid' => $file->isValid(),
-//                     'original_name' => $file->getClientOriginalName(),
-//                     'mime' => $file->getMimeType()
-//                 ]);
-                
-//                 if ($file->isValid()) {
-//                     $filename = time() . '_' . $file->getClientOriginalName();
-//                     $path = $file->storeAs('complaints', $filename, 'public');
-//                     $attachments[] = [
-//                         'path' => $path,
-//                         'original_name' => $file->getClientOriginalName()
-//                     ];
-//                 }
-//             }
-            
-//             $data['attachments'] = json_encode($attachments);
-//         } else {
-//             // Force empty array if no file input is present
-//             $data['attachments'] = '[]';
-//         }
-//     } catch (\Exception $e) {
-//         Log::error('Error processing attachments', [
-//             'message' => $e->getMessage(),
-//             'trace' => $e->getTraceAsString()
-//         ]);
-//         // Set to empty array on error
-//         $data['attachments'] = '[]';
-//     }
-    
-//     // Debug what's happening with the request data
-//     Log::info('Final data being stored:', [
-//         'data' => array_diff_key($data, ['attachments' => 'redacted']),
-//         'attachments_count' => count($attachments)
-//     ]);
-    
-//     // Create the complaint
-//     $complaint = Complaint::create($data);
-    
-//     // Rest of your code remains the same...
-    
-//     return response()->json([
-//         'complaint' => $complaint,
-//         'message' => 'Complaint created successfully',
-//         'attachments_count' => count($attachments),
-//         'debug_info' => [
-//             'files_received' => $request->hasFile('attachments'),
-//             'files_processed' => count($attachments)
-//         ]
-//     ], Response::HTTP_CREATED);
-// }
+
     public function update(Request $request, $id)
     {
+
+
         $complaint = $this->findComplaint($id);
 
         if (!$complaint) {

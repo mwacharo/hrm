@@ -11,18 +11,18 @@ class LeaveApprovalNotification extends Notification
     use Queueable;
 
     protected $leave;
+    protected $role;
 
-    public function __construct($leave)
+    public function __construct($leave ,$role)
     {
         $this->leave = $leave;
+        $this->role = $role;
     }
 
     public function toMail($notifiable)
     {
-        $this->leave->load('user'); // Ensure we have the related data
 
         $employeeName = $this->leave->user->firstname . ' ' . $this->leave->user->lastname;
-        // $approverName = $this->leave->approvedBy->firstname . ' ' . $this->leave->approvedBy->lastname;
 
         return (new MailMessage)
             ->subject('Your Leave Request has been Approved')
