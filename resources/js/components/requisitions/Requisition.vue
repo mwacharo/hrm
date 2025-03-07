@@ -30,7 +30,7 @@
             <!-- <p>User ID: {{ userId }}</p> -->
 
 
-            
+
           </div>
         </v-row>
 
@@ -64,13 +64,16 @@
                 <v-icon @click="viewRequisition(item)" color="info" title="View Requisition">
                   mdi-eye-check-outline
                 </v-icon>
-                <v-icon  v-if="roles.includes('admin')" @click="OpenapproveRequisitionModal(item)" color="success" title="Approve Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="OpenapproveRequisitionModal(item)" color="success"
+                  title="Approve Requisition">
                   mdi-thumb-up-outline
                 </v-icon>
-                <v-icon v-if="roles.includes('admin')" @click="OpencancelRequisitionModal(item)" color="error" title="Reject Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="OpencancelRequisitionModal(item)" color="error"
+                  title="Reject Requisition">
                   mdi-close-circle
                 </v-icon>
-                <v-icon v-if="roles.includes('admin')" @click="deleteRequisition(item)" color="error" title="Delete Requisition">
+                <v-icon v-if="roles.includes('admin')" @click="deleteRequisition(item)" color="error"
+                  title="Delete Requisition">
                   mdi-delete
                 </v-icon>
 
@@ -167,7 +170,7 @@
 
 
         <!-- Request Modal with Steppers -->
-        <v-dialog v-model="requestModal" :max-width="(step===1) ? 1500 : 800" persistent>
+        <v-dialog v-model="requestModal" :max-width="(step === 1) ? 1500 : 800" persistent>
           <v-card>
             <v-stepper v-model="step" :items="items" show-actions>
               <!-- Stepper Items -->
@@ -247,18 +250,18 @@
       </v-main>
     </v-layout>
   </v-container>
-  
+
 </template>
 
 <script>
 export default {
 
-  
-    props: {
-      user: Object,
-      roles: Array,
-      permissions: Array
-    },
+
+  props: {
+    user: Object,
+    roles: Array,
+    permissions: Array
+  },
 
 
   data() {
@@ -318,15 +321,11 @@ export default {
     };
   },
   methods: {
-
     viewRequisition(item) {
       const requisitionId = item.id;
       const pdfUrl = `/api/v1/requisitions/${requisitionId}/pdf`;
       window.open(pdfUrl, '_blank');
     },
-
-
-
     capitalizeEachWord(text) {
       if (!text) return '';
       return text
@@ -347,9 +346,7 @@ export default {
 
     closelogsModal() {
       this.logsModal = false
-
     },
-
     openLogsModal(requisitionId) {
       this.logsModal = true; // Open the modal
       this.logs = []; // Clear existing logs
@@ -555,13 +552,11 @@ export default {
         //   this.$toastr.error('Failed to save requisition. Please try again.'); // Optional: Error notification
         // });
         .catch((error) => {
-  const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
-  console.error("Error saving requisition:", errorMessage, error.response?.data);
-  this.$toastr.error(errorMessage);
-});
-
+          const errorMessage = error.response?.data?.message || "An unexpected error occurred.";
+          console.error("Error saving requisition:", errorMessage, error.response?.data);
+          this.$toastr.error(errorMessage);
+        });
     },
-
     openRequestModal() {
       this.requestModal = true;
     },
@@ -586,14 +581,9 @@ export default {
     },
   },
   async created() {
-
-
     console.log("User:", this.user);
     console.log("Roles:", this.roles);
     console.log("Permissions:", this.permissions);
-
-
-
     await this.fetchStats();
     await this.fetchRequisitions();
   },

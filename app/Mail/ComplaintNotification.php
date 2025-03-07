@@ -32,7 +32,7 @@ class ComplaintNotification extends Mailable
      */
     public function build()
     {
-        return $this->subject('New Complaint Raised')
+        return $this->subject('New Suggestion Raised')
             ->view('emails.complaint-notification');
     }
 }

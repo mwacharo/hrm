@@ -14,6 +14,27 @@
                             <!-- </v-toolbar> -->
                         </template>
 
+
+                        <template v-slot:item.attachments="{ item }">
+                            <div v-if="item.attachments">
+                                <template v-for="(attachment, index) in parseAttachments(item.attachments)"
+                                    :key="index">
+                                    <a :href="getAttachmentUrl(attachment)" target="_blank">
+                                        {{ attachment.original_name }}
+                                    </a>
+                                    <span v-if="index < parseAttachments(item.attachments).length - 1">, </span>
+                                </template>
+                            </div>
+                            <span v-else>-</span>
+                        </template>
+
+                        <template v-slot:item.links="{ item }">
+                            <v-chip v-for="(link, index) in parseLinks(item.links)" :key="index" class="ma-2">
+                                <a :href="link" target="_blank">{{ getDisplayLink(link) }}</a>
+                            </v-chip>
+                            <span v-if="!item.links || parseLinks(item.links).length === 0">-</span>
+                        </template>
+
                         <template v-slot:item.status="{ item }">
                             <v-chip :color="getStatusColor(item.status)" dark
                                 @click="openStatusDialog(item, 'status')">{{ item.status }}</v-chip>
@@ -33,6 +54,19 @@
                             <v-chip :color="getPriorityColor(item.priority)" dark
                                 @click="openStatusDialog(item, 'priority')">{{ item.priority }}</v-chip>
                         </template>
+                        <template v-slot:item.addressed_to="{ item }">
+                            <span v-if="item.addressed_to && item.addressed_to.length">
+                                {{ item.addressed_to.join(', ') }}
+                            </span>
+                            <span v-else>-</span>
+                        </template>
+                        <template v-slot:item.followers="{ item }">
+                            <span v-if="item.followers && item.followers.length">
+                                {{ item.followers.join(', ') }}
+                            </span>
+                            <span v-else>-</span>
+                        </template>
+
 
                         <template v-slot:item.actions="{ item }">
                             <v-icon small color="primary" @click="viewVoice(item.id)"
@@ -112,7 +146,7 @@
                                     <v-list-item-content>
                                         <v-list-item-title>Assigned To:</v-list-item-title>
                                         <v-list-item-subtitle>
-                                            <v-chip v-for="user in selectedVoice.assigned_to" :key="user.id"
+                                            <v-chip v-for="user in selectedVoice.addressed_to" :key="user.id"
                                                 class="ma-2">
                                                 {{ user.fullname }}
                                             </v-chip>
@@ -222,7 +256,7 @@
                                     label="Category" :rules="[v => !!v || 'Category is required']"></v-select>
                             </v-col>
                             <v-col cols="12">
-                                <v-select variant="outlined" v-model="editedVoice.assigned_to" :items="users"
+                                <v-select variant="outlined" v-model="editedVoice.addressed_to" :items="users"
                                     label="Address To" item-value="id" item-title="fullname" multiple
                                     :rules="[v => (v && v.length) || 'Addressee is required']"></v-select>
                             </v-col>
@@ -239,7 +273,8 @@
                             <v-col>
                                 <v-file-input ref="fileInput" v-model="attachments" label="Attach Documents (Optional)"
                                     multiple accept=".pdf, .doc, .docx, .png" outlined clearable
-                                    @change="handleFileUpload"></v-file-input>
+                                    @change="handleFileUpload">
+                                </v-file-input>
                                 <div v-if="attachments && attachments.length > 0">
                                     <v-chip v-for="(file, index) in attachments" :key="index" class="ma-2" close
                                         @click:close="removeAttachment(index)">
@@ -276,6 +311,11 @@
 
 <script>
 export default {
+    props: {
+        user: Object,
+        roles: Array,
+        permissions: Array
+    },
     data() {
         return {
 
@@ -285,6 +325,7 @@ export default {
             attachments: [],
             confirmDeleteDialog: false,
             followers: [],
+            addressed_to: [],
             filteredUsers: [],
             loading: false,
             base_url: '/',
@@ -318,6 +359,7 @@ export default {
             statuses: ['Open', 'In Progress', 'Resolved', 'Closed'],
             categories: ['Harassment', 'Workplace Safety', 'Compensation & Benefits', 'Employee Rights', 'Workload & Scheduling', 'Other'],
             newLink: '',
+            links: [],
 
         };
     },
@@ -327,11 +369,52 @@ export default {
         }
     },
     created() {
+        console.log("User:", this.user);
+        console.log("Roles:", this.roles);
+        console.log("Permissions:", this.permissions);
         this.fetchUsers();
         this.fetchVoices();
     },
     methods:
     {
+        parseLinks(linksString) {
+    try {
+      return typeof linksString === 'string' 
+        ? JSON.parse(linksString) 
+        : (Array.isArray(linksString) ? linksString : []);
+    } catch (e) {
+      console.error('Error parsing links:', e);
+      return [];
+    }
+  },
+  
+  getDisplayLink(link) {
+    // Display a more readable version of the link
+    // This will show the domain name instead of the full URL
+    try {
+      const url = new URL(link);
+      return url.hostname;
+    } catch (e) {
+      return link;
+    }
+  },
+        parseAttachments(attachmentsString) {
+            try {
+                return typeof attachmentsString === 'string'
+                    ? JSON.parse(attachmentsString)
+                    : (Array.isArray(attachmentsString) ? attachmentsString : []);
+            } catch (e) {
+                console.error('Error parsing attachments:', e);
+                return [];
+            }
+        },
+
+        getAttachmentUrl(attachment) {
+           
+            return `/storage/${attachment.path}`;
+
+
+        },
 
         updateField() {
             const field = this.dialogField;
@@ -340,44 +423,41 @@ export default {
             const updatedVoice = { ...this.editedVoice };
 
             axios.put(`${this.base_url}api/v1/voices/${updatedVoice.id}`, {
-            [field]: updatedVoice[field]
+                [field]: updatedVoice[field]
             })
-            .then(response => {
-            this.showSuccess(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
-            this.statusDialog = false;
-            this.fetchVoices(); 
-            })
-            .catch(error => {
-            console.error(`Error updating ${field}:`, error);
-            this.showError(`Failed to update ${field}. Please try again.`);
-            });
+                .then(response => {
+                    this.showSuccess(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
+                    this.statusDialog = false;
+                    this.fetchVoices();
+                })
+                .catch(error => {
+                    console.error(`Error updating ${field}:`, error);
+                    this.showError(`Failed to update ${field}. Please try again.`);
+                });
         },
         openconfirmDeleteDialog(item) {
             this.editedVoice = item;
             this.confirmDeleteDialog = true;
         },
 
-
-
         handleFileUpload(file) {
             if (file instanceof File) {
                 console.log('Valid file selected:', file);
-                this.attachments = file;  // Store correctly
+                const file = this.attachments.document[0]; // Get the first file from the array
+
+                // this.attachments = file;  // Store correctly
             } else {
                 console.error('Invalid file selected:', file);
             }
-        }
-        ,
+        },
         removeAttachment(index) {
-            console.log('removeAttachment called with index:', index);
-            this.attachments.splice(index, 1);
-            console.log('Updated attachments after removal:', this.attachments);
+            this.attachments.splice(index, 1); // Remove the file at the specified index
         },
         getDefaultVoice() {
             return {
                 subject: '',
                 status: 'Open',
-                assigned_to: [],
+                addressed_to: [],
                 description: '',
                 category: '',
                 priority: 'Medium',
@@ -410,6 +490,8 @@ export default {
                 .then(response => {
                     // Make sure the property name matches what the API returns
                     this.voices = response.data.complaints || response.data.voices || [];
+                    const test = this.voices
+                    console.log('voices:', test);
                     this.loading = false;
                 })
                 .catch(error => {
@@ -467,53 +549,39 @@ export default {
             if (!this.validateForm()) {
                 return;
             }
+
             const formData = new FormData();
             formData.append('subject', this.editedVoice.subject);
-            console.log('Appending subject:', this.editedVoice.subject);
             formData.append('description', this.editedVoice.description);
-            console.log('Appending description:', this.editedVoice.description);
             formData.append('category', this.editedVoice.category);
-            console.log('Appending category:', this.editedVoice.category);
             formData.append('status', this.editedVoice.status);
-            console.log('Appending status:', this.editedVoice.status);
             formData.append('priority', this.editedVoice.priority);
-            console.log('Appending priority:', this.editedVoice.priority);
+            formData.append('user_id', this.user.id,); 
 
             // Handle array values correctly
-            if (this.editedVoice.assigned_to && this.editedVoice.assigned_to.length) {
-                this.editedVoice.assigned_to.forEach(assignee => {
-                    formData.append('assigned_to[]', assignee);
-                    console.log('Appending assigned_to:', assignee);
+            if (this.editedVoice.addressed_to && this.editedVoice.addressed_to.length) {
+                this.editedVoice.addressed_to.forEach(assignee => {
+                    formData.append('addressed_to[]', assignee);
                 });
             }
-
             if (this.editedVoice.followers && this.editedVoice.followers.length) {
                 this.editedVoice.followers.forEach(follower => {
                     formData.append('followers[]', follower);
-                    console.log('Appending follower:', follower);
                 });
             }
-
             formData.append('is_anonymous', this.editedVoice.is_anonymous ? 1 : 0);
-            console.log('Appending is_anonymous:', this.editedVoice.is_anonymous ? 1 : 0);
-
+            
             if (this.attachments && this.attachments.length > 0) {
                 formData.append('attachments', this.attachments[0]); // Only append the first file
                 console.log('Appending first file:', this.attachments[0]);
             } else {
                 console.log('No file selected');
             }
-
+            // Handle links properly
             if (this.editedVoice.links && this.editedVoice.links.length) {
                 this.editedVoice.links.forEach(link => {
                     formData.append('links[]', link);
-                    console.log('Appending link:', link);
                 });
-            }
-
-            // Log the entire FormData object
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
             }
 
             this.loading = true;
@@ -539,7 +607,9 @@ export default {
                     console.error('Error saving voice:', error);
                     this.showError('Failed to save voice. Please try again.');
                 });
-        }, openStatusDialog(item, field) {
+        },
+
+        openStatusDialog(item, field) {
             this.editedVoice = item;
             this.dialogField = field;
             this.statusDialog = true;
@@ -558,7 +628,7 @@ export default {
                 this.showError('Category is required');
                 return false;
             }
-            if (!this.editedVoice.assigned_to || !this.editedVoice.assigned_to.length) {
+            if (!this.editedVoice.addressed_to || !this.editedVoice.addressed_to.length) {
                 this.showError('At least one addressee is required');
                 return false;
             }
@@ -603,7 +673,6 @@ export default {
             }
         },
         showSuccess(message) {
-            // Replace with your preferred notification method
             if (typeof this.$toastr !== 'undefined') {
                 this.$toastr.success(message);
             } else {
@@ -611,7 +680,6 @@ export default {
             }
         },
         showError(message) {
-            // Replace with your preferred notification method
             if (typeof this.$toastr !== 'undefined') {
                 this.$toastr.error(message);
             } else {

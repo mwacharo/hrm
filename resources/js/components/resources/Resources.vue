@@ -417,7 +417,6 @@ export default {
         this.fetchResources();
         this.fetchUsers();
 
-
     },
     methods: {
 
