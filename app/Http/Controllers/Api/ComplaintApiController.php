@@ -83,8 +83,6 @@ class ComplaintApiController extends Controller
     {
         Log::info('Complaint request received.', ['request' => $request->all()]);
 
-        // dd($request->file('attachments'));
-
         try {
             // Validate the request including attachments
             $data = $this->validateComplaint($request);
@@ -96,47 +94,12 @@ class ComplaintApiController extends Controller
 
             if ($request->hasFile('attachments')) {
                 $files = is_array($request->file('attachments')) ? $request->file('attachments') : [$request->file('attachments')];
-                // dd($files);
-
-
-                // ray:1 [ // app/Http/Controllers/Api/ComplaintApiController.php:98
-                //   0 => Illuminate\Http\UploadedFile {#1329
-                //     -test: false
-                //     -originalName: "Screenshot from 2025-03-04 14-03-38.png"
-                //     -mimeType: "image/png"
-                //     -error: 0
-                //     #hashName: null
-                //     path: "/tmp"
-                //     filename: "phpQiJWn1"
-                //     basename: "phpQiJWn1"
-                //     pathname: "/tmp/phpQiJWn1"
-                //     extension: ""
-                //     realPath: "/tmp/phpQiJWn1"
-                //     aTime: 2025-03-07 13:21:18
-                //     mTime: 2025-03-07 13:21:18
-                //     cTime: 2025-03-07 13:21:18
-                //     inode: 27267214
-                //     size: 173381
-                //     perms: 0100600
-                //     owner: 1000
-                //     group: 1000
-                //     type: "file"
-                //     writable: true
-                //     readable: true
-                //     executable: false
-                //     file: true
-                //     dir: false
-                //     link: false
-                //   }
-                // ]
-
 
                 foreach ($files as $file) {
                     $filename = time() . '_' . $file->getClientOriginalName();
                     $path = $file->storeAs('complaints', $filename, 'public');
 
                     Log::info('Stored file path:', ['path' => $path]);
-
 
                     $storedAttachment = [
                         'path' => $path,
@@ -183,7 +146,10 @@ class ComplaintApiController extends Controller
             }
 
             // Send email notifications
-            $this->sendComplaintNotifications($request, $complaint);
+            // $this->sendComplaintNotifications($request, $complaint);
+
+            // Log the action
+            $this->LogAction($complaint->id, 'Created', $complaint);
 
             return response()->json(['complaint' => $complaint], Response::HTTP_CREATED);
         } catch (\Exception $e) {
@@ -313,6 +279,11 @@ class ComplaintApiController extends Controller
 
         $complaint->update($data);
 
+        Log::info('Complaint status updated.', ['complaint_id' => $complaint]);
+        $this->LogAction($complaint->id, 'Status Updated', $complaint);
+
+
+
         // Attach Assigned Users (Role: addressed_to)
         if ($request->filled('addressed_to')) {
             $complaint->users()->syncWithoutDetaching(
@@ -390,7 +361,7 @@ class ComplaintApiController extends Controller
         $complaint->save();
 
         Log::info('Complaint status updated.', ['complaint_id' => $complaint->id, 'status' => $request->status]);
-        $this->storeAction($complaint->id, 'Status Updated', $request->status);
+        $this->LogAction($complaint->id, 'Status Updated', $request->status);
 
         return response()->json(['complaint' => $complaint], Response::HTTP_OK);
     }
@@ -430,7 +401,7 @@ class ComplaintApiController extends Controller
             'action' => $action,
             'old_data' => json_encode($previousData),
             'new_data' => json_encode($complaint->toArray()),
-            'performed_at' => Carbon::now(),
+            // 'performed_at' => Carbon::now(),
         ]);
 
         Log::info('Action stored.', [
