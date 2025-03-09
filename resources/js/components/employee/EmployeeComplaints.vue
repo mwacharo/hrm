@@ -86,7 +86,7 @@
         <v-dialog v-model="statusDialog" max-width="500px">
             <v-card>
                 <v-card-title class="headline">Update {{ dialogField.charAt(0).toUpperCase() + dialogField.slice(1)
-                }}</v-card-title>
+                    }}</v-card-title>
                 <v-card-text>
                     <v-select v-if="dialogField === 'status'" v-model="editedVoice.status" :items="statuses"
                         label="Status" :rules="[v => !!v || 'Status is required']"></v-select>
@@ -109,118 +109,137 @@
         <!-- dialog to view voice shows the history of the voice -->
         <v-dialog v-model="viewVoiceDialog" max-width="800px">
             <v-card>
-                <v-card-title>
-                    <span class="headline">Voice Details</span>
+                <v-card-title class="d-flex justify-space-between align-center">
+                    <span class="headline font-weight-bold">Complaint Logs</span>
+                    <v-btn icon @click="viewVoiceDialog = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
+
+                <v-divider></v-divider>
+
                 <v-card-text>
-                    <v-container>
-                        <v-row>
+                    <v-container v-if="selectedVoice.length">
+                        <v-row v-for="(log, index) in selectedVoice" :key="log.id">
                             <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Subject: {{ selectedVoice.subject }}</v-list-item-title>
-                                        <v-list-item-subtitle>Description: {{ selectedVoice.description
-                                        }}</v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Category: {{ selectedVoice.category }}</v-list-item-title>
-                                        <v-list-item-subtitle>Status: {{ selectedVoice.status }}</v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Priority: {{ selectedVoice.priority }}</v-list-item-title>
-                                        <v-list-item-subtitle>Anonymous: {{ selectedVoice.is_anonymous ? 'Yes' : 'No'
-                                        }}</v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Assigned To:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="user in selectedVoice.addressed_to" :key="user.id"
-                                                class="ma-2">
-                                                {{ user.fullname }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Followers:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="user in selectedVoice.followers" :key="user.id" class="ma-2">
-                                                {{ user.fullname }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Attachments:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="(file, index) in selectedVoice.attachments" :key="index"
-                                                class="ma-2">
-                                                {{ file.name }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>Links:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-chip v-for="(link, index) in selectedVoice.links" :key="index"
-                                                class="ma-2">
-                                                {{ link }}
-                                            </v-chip>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-list-item>
-                                    <v-list-item-content>
-                                        <v-list-item-title>History:</v-list-item-title>
-                                        <v-list-item-subtitle>
-                                            <v-timeline>
-                                                <v-timeline-item v-for="(history, index) in selectedVoice.history"
-                                                    :key="index" :color="getStatusColor(history.status)"
-                                                    :icon="getStatusIcon(history.status)">
-                                                    <v-card>
-                                                        <v-card-title>{{ history.status }}</v-card-title>
-                                                        <v-card-subtitle>{{ history.date }}</v-card-subtitle>
-                                                        <v-card-text>{{ history.description }}</v-card-text>
-                                                    </v-card>
-                                                </v-timeline-item>
-                                            </v-timeline>
-                                        </v-list-item-subtitle>
-                                    </v-list-item-content>
-                                </v-list-item>
+                                <v-card outlined class="pa-4 elevation-2">
+                                    <v-card-title class="font-weight-medium">
+                                        Log #{{ index + 1 }}
+                                    </v-card-title>
+
+                                    <v-card-subtitle class="text-caption text-grey-darken-1">
+                                        <v-chip small color="primary" class="mr-2">
+                                            {{ log.action }}
+                                        </v-chip>
+                                        <strong>Logged By:</strong> {{ log.user ? log.user.firstname : 'Unknown' }} |
+                                        <strong>Complaint ID:</strong> {{ log.complaint_id }}
+                                    </v-card-subtitle>
+
+                                    <v-divider></v-divider>
+
+                                    <v-card-text class="mt-3">
+                                        <v-list dense>
+                                            <v-list-item v-if="parseNewData(log.new_data).description">
+                                                <v-list-item-icon>
+                                                    <v-icon color="blue">mdi-note-text</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Description:</strong> {{
+                                                        parseNewData(log.new_data).description }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+
+                                            <v-list-item v-if="parseNewData(log.new_data).comments">
+                                                <v-list-item-icon>
+                                                    <v-icon color="purple">mdi-comment-text</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Comments:</strong> {{ parseNewData(log.new_data).comments }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+
+                                            <v-list-item v-if="parseNewData(log.new_data).category">
+                                                <v-list-item-icon>
+                                                    <v-icon color="purple">mdi-tag</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Category:</strong> {{ parseNewData(log.new_data).category }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <v-list-item v-if="parseNewData(log.new_data).addressed_to">
+                                                <v-list-item-icon>
+                                                    <v-icon color="teal">mdi-account-multiple</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Addressed To:</strong> {{
+                                                        parseNewData(log.new_data).addressed_to.join(', ') }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                            <!-- <v-list-item v-if="parseNewData(log.new_data).followers">
+                                                <v-list-item-icon>
+                                                    <v-icon color="amber">mdi-account-group</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Followers:</strong> {{
+                                                    parseNewData(log.new_data).followers.join(',
+                                                    ') }}
+                                                </v-list-item-content>
+                                            </v-list-item> -->
+
+                                            <v-list-item v-if="parseNewData(log.new_data).status">
+                                                <v-list-item-icon>
+                                                    <v-icon color="green">mdi-check-circle</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Status:</strong> {{ parseNewData(log.new_data).status }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+                                            <v-list-item v-if="parseNewData(log.new_data).priority">
+                                                <v-list-item-icon>
+                                                    <v-icon color="red">mdi-alert</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Priority:</strong> {{ parseNewData(log.new_data).priority }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+
+                                            <v-list-item v-if="parseNewData(log.new_data).is_anonymous">
+                                                <v-list-item-icon>
+                                                    <v-icon color="grey">mdi-incognito</v-icon>
+                                                </v-list-item-icon>
+                                                <v-list-item-content>
+                                                    <strong>Anonymous:</strong> {{
+                                                        parseNewData(log.new_data).is_anonymous ?
+                                                            'Yes' : 'No' }}
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </v-list>
+
+                                        <p class="text-caption text-grey mt-3">
+                                            <strong>Updated At:</strong> {{ formatDate(log.updated_at) }}
+                                        </p>
+                                    </v-card-text>
+                                </v-card>
                             </v-col>
                         </v-row>
                     </v-container>
+                    <v-container v-else class="text-center">
+                        <v-alert type="info" outlined>
+                            No complaint logs found.
+                        </v-alert>
+                    </v-container>
                 </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="viewVoiceDialog = false">Close</v-btn>
+
+                <v-card-actions class="justify-end">
+                    <v-btn color="primary" @click="viewVoiceDialog = false">Close</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+
         <!-- confirm delete modal -->
 
 
@@ -239,7 +258,7 @@
 
 
         <!-- edit voice -->
-        <v-dialog v-model="showDialog" max-width="600px">
+        <v-dialog v-model="showDialog" max-width="800px">
             <v-card>
                 <v-card-title>
                     <span class="headline">{{ formTitle }}</span>
@@ -377,27 +396,38 @@ export default {
     },
     methods:
     {
+        parseNewData(data) {
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                console.error("Error parsing JSON:", e);
+                return {};
+            }
+        },
+
+        formatDate(dateStr) {
+            return new Date(dateStr).toLocaleString();
+        },
         parseLinks(linksString) {
-    try {
-      return typeof linksString === 'string' 
-        ? JSON.parse(linksString) 
-        : (Array.isArray(linksString) ? linksString : []);
-    } catch (e) {
-      console.error('Error parsing links:', e);
-      return [];
-    }
-  },
-  
-  getDisplayLink(link) {
-    // Display a more readable version of the link
-    // This will show the domain name instead of the full URL
-    try {
-      const url = new URL(link);
-      return url.hostname;
-    } catch (e) {
-      return link;
-    }
-  },
+            try {
+                return typeof linksString === 'string'
+                    ? JSON.parse(linksString)
+                    : (Array.isArray(linksString) ? linksString : []);
+            } catch (e) {
+                console.error('Error parsing links:', e);
+                return [];
+            }
+        },
+        getDisplayLink(link) {
+            // Display a more readable version of the link
+            // This will show the domain name instead of the full URL
+            try {
+                const url = new URL(link);
+                return url.hostname;
+            } catch (e) {
+                return link;
+            }
+        },
         parseAttachments(attachmentsString) {
             try {
                 return typeof attachmentsString === 'string'
@@ -410,12 +440,9 @@ export default {
         },
 
         getAttachmentUrl(attachment) {
-           
+
             return `/storage/${attachment.path}`;
-
-
         },
-
         updateField() {
             const field = this.dialogField;
             if (!field) return;
@@ -455,18 +482,24 @@ export default {
         },
         getDefaultVoice() {
             return {
-                subject: '',
-                status: 'Open',
-                addressed_to: [],
-                description: '',
-                category: '',
-                priority: 'Medium',
-                is_anonymous: true,
-                attachments: [],
-                links: [],
-                followers: [],
-                viewVoiceDialog: false,
+            subject: '',
+            status: 'Open',
+            addressed_to: [],
+            description: '',
+            category: '',
+            priority: 'Medium',
+            is_anonymous: true,
+            attachments: [],
+            links: [],
+            followers: [],
+            viewVoiceDialog: false,
             };
+        },
+        editVoice(item) {
+            this.editedIndex = this.voices.indexOf(item);
+            this.editedVoice = Object.assign({}, item);
+            this.editedVoice.links = this.editedVoice.links || []; // Initialize links if undefined
+            this.showDialog = true;
         },
         fetchUsers() {
             this.loading = true;
@@ -502,18 +535,19 @@ export default {
         },
         viewVoice(id) {
             this.viewVoiceDialog = true;
-            // this.loading = true;
-            // axios.get(`${this.base_url}api/v1/voices/${id}`)
-            // .then(response => {
-            //     this.selectedVoice = response.data.voice;
-            //     // this.viewVoiceDialog = true;
-            //     this.loading = false;
-            // })
-            // .catch(error => {
-            //     this.loading = false;
-            //     console.error('Error fetching voice details:', error);
-            //     this.showError('Failed to load voice details. Please try again.');
-            // });
+            this.loading = true;
+            axios.get(`${this.base_url}api/v1/voices/${id}`)
+                .then(response => {
+                    this.selectedVoice = response.data.logs;
+                    // this.viewVoiceDialog = true;
+                    console.log('Selected voice:', this.selectedVoice);
+                    this.loading = false;
+                })
+                .catch(error => {
+                    this.loading = false;
+                    console.error('Error fetching voice details:', error);
+                    this.showError('Failed to load voice details. Please try again.');
+                });
         },
         openDialog() {
             this.editedIndex = -1;
@@ -556,7 +590,7 @@ export default {
             formData.append('category', this.editedVoice.category);
             formData.append('status', this.editedVoice.status);
             formData.append('priority', this.editedVoice.priority);
-            formData.append('user_id', this.user.id,); 
+            formData.append('user_id', this.user.id,);
 
             // Handle array values correctly
             if (this.editedVoice.addressed_to && this.editedVoice.addressed_to.length) {
@@ -570,7 +604,7 @@ export default {
                 });
             }
             formData.append('is_anonymous', this.editedVoice.is_anonymous ? 1 : 0);
-            
+
             if (this.attachments && this.attachments.length > 0) {
                 formData.append('attachments', this.attachments[0]); // Only append the first file
                 console.log('Appending first file:', this.attachments[0]);

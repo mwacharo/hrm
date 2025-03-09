@@ -16,67 +16,63 @@ use Symfony\Component\HttpFoundation\Response;
 class ComplaintApiController extends Controller
 {
 
+
     public function index(Request $request)
     {
         $userId = $request->query('user_id');
         $status = $request->query('status');
         $category = $request->query('category');
         $priority = $request->query('priority');
-        // $links = $request->query('links');
 
-        // Load related users: creator, addressedTo, and followers
+        $user = auth()->user();
+        $hr = $user->is_hr;
+        $hod = $user->is_hod;
+        $super_admin = $user->super_admin;
+
         $query = Complaint::with(['user', 'addressedTo', 'followers']);
 
+        // Allow creators to see their complaints
+        if (!($hr || $hod || $super_admin)) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereHas('addressedTo', fn($q) => $q->where('users.id', $user->id))
+                    ->orWhereHas('followers', fn($q) => $q->where('users.id', $user->id));
+            });
+        }
+
         // Apply filters
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
-        if ($status) {
-            $query->where('status', $status);
-        }
-        if ($category) {
-            $query->where('category', $category);
-        }
-        if ($priority) {
-            $query->where('priority', $priority);
-        }
+        if ($userId) $query->where('user_id', $userId);
+        if ($status) $query->where('status', $status);
+        if ($category) $query->where('category', $category);
+        if ($priority) $query->where('priority', $priority);
 
-        // Fetch and map the complaints
-        $complaints = $query->get()->map(function ($complaint) {
-            return [
-                'id' => $complaint->id,
-                'subject' => $complaint->subject,
-                'description' => $complaint->description,
-                'category' => $complaint->category,
-                'priority' => $complaint->priority,
-                'user_id' => $complaint->user_id,
-                'status' => $complaint->status,
-                'entry_channel' => $complaint->entry_channel,
-                'due_date' => $complaint->due_date,
-                'date_opened' => $complaint->date_opened,
-                'closed_date' => $complaint->closed_date,
-                'attachments' => $complaint->attachments,
-                'links' => $complaint->links,
-                'comments' => $complaint->comments,
-                'resolution' => $complaint->resolution,
-                'created_at' => $complaint->created_at ? Carbon::parse($complaint->created_at)->format('D d M Y H:i') : null,
-                'updated_at' => $complaint->updated_at ? Carbon::parse($complaint->updated_at)->format('D d M Y H:i') : null,
-                'deleted_at' => $complaint->deleted_at,
-
-                // Get the full name of the creator
-                'created_by' => $complaint->user ? $complaint->user->firstname . ' ' . $complaint->user->lastname : null,
-
-                // Get all assigned users as an array of full names
-                'addressed_to' => $complaint->addressedTo->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
-
-                // Get all followers as an array of full names
-                'followers' => $complaint->followers->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
-            ];
-        });
+        // Fetch and transform data
+        $complaints = $query->get()->map(fn($complaint) => [
+            'id' => $complaint->id,
+            'subject' => $complaint->subject,
+            'description' => $complaint->description,
+            'category' => $complaint->category,
+            'priority' => $complaint->priority,
+            'user_id' => $complaint->user_id,
+            'status' => $complaint->status,
+            'entry_channel' => $complaint->entry_channel,
+            'due_date' => $complaint->due_date,
+            'date_opened' => $complaint->date_opened,
+            'closed_date' => $complaint->closed_date,
+            'attachments' => $complaint->attachments,
+            'links' => $complaint->links,
+            'comments' => $complaint->comments,
+            'resolution' => $complaint->resolution,
+            'created_at' => $complaint->created_at,
+            'updated_at' => $complaint->updated_at,
+            'deleted_at' => $complaint->deleted_at,
+            'created_by' => optional($complaint->user)->firstname . ' ' . optional($complaint->user)->lastname,
+            'addressed_to' => $complaint->addressedTo->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
+            'followers' => $complaint->followers->map(fn($user) => $user->firstname . ' ' . $user->lastname)->toArray(),
+        ]);
 
         return response()->json(['complaints' => $complaints], Response::HTTP_OK);
     }
-
 
 
     public function store(Request $request)
@@ -146,10 +142,13 @@ class ComplaintApiController extends Controller
             }
 
             // Send email notifications
-            // $this->sendComplaintNotifications($request, $complaint);
+
+            Log::info('Sending complaint notifications.', ['complaint_id' => $complaint->id]);
+            $this->sendComplaintNotifications($request, $complaint);
+            Log::info('Complaint notifications sent successfully.', ['complaint_id' => $complaint->id]);
 
             // Log the action
-            $this->LogAction($complaint->id, 'Created', $complaint);
+            // $this->LogAction($complaint->id, 'Created', $complaint);
 
             return response()->json(['complaint' => $complaint], Response::HTTP_CREATED);
         } catch (\Exception $e) {
@@ -280,7 +279,7 @@ class ComplaintApiController extends Controller
         $complaint->update($data);
 
         Log::info('Complaint status updated.', ['complaint_id' => $complaint]);
-        $this->LogAction($complaint->id, 'Status Updated', $complaint);
+        // $this->LogAction($complaint->id, ' Updated', $complaint);
 
 
 
@@ -322,93 +321,41 @@ class ComplaintApiController extends Controller
         return Complaint::find($id);
     }
 
-
-
-    public function addComment(Request $request, $id)
+    public function voiceLogs($id)
     {
-        $complaint = $this->findComplaint($id);
+        $complaintLog = ComplaintLog::with('user')->where('complaint_id',$id)->get();
 
-        if (!$complaint) {
-            return response()->json(['message' => 'Complaint not found'], Response::HTTP_NOT_FOUND);
+        if (!$complaintLog) {
+            return response()->json(['message' => 'Complaint log not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $request->validate([
-            'comment' => 'required|string',
-        ]);
-
-        $complaint->comments = $complaint->comments ? $complaint->comments . "\n" . $request->comment : $request->comment;
-        $complaint->save();
-
-        Log::info('Comment added to complaint.', ['complaint_id' => $complaint->id, 'comment' => $request->comment]);
-        $this->storeAction($complaint->id, 'Comment Added', $request->comment);
-
-        return response()->json(['complaint' => $complaint], Response::HTTP_OK);
-    }
-
-    public function updateStatus(Request $request, $id)
-    {
-        $complaint = $this->findComplaint($id);
-
-        if (!$complaint) {
-            return response()->json(['message' => 'Complaint not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $request->validate([
-            'status' => 'required|string|max:255',
-        ]);
-
-        $complaint->status = $request->status;
-        $complaint->save();
-
-        Log::info('Complaint status updated.', ['complaint_id' => $complaint->id, 'status' => $request->status]);
-        $this->LogAction($complaint->id, 'Status Updated', $request->status);
-
-        return response()->json(['complaint' => $complaint], Response::HTTP_OK);
-    }
-
-    public function addResolution(Request $request, $id)
-    {
-        $complaint = $this->findComplaint($id);
-
-        if (!$complaint) {
-            return response()->json(['message' => 'Complaint not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        $request->validate([
-            'resolution' => 'required|string',
-        ]);
-
-        $complaint->resolution = $request->resolution;
-        $complaint->status = 'Resolved';
-        $complaint->closed_date = Carbon::now();
-        $complaint->save();
-
-        Log::info('Complaint resolved.', ['complaint_id' => $complaint->id, 'resolution' => $request->resolution]);
-        $this->LogAction($complaint->id, 'Resolved', $request->resolution);
-
-        return response()->json(['complaint' => $complaint], Response::HTTP_OK);
-    }
-
-    private function LogAction($complaintId, $action, $details)
-    {
-        $complaint = $this->findComplaint($complaintId);
-        $previousData = $complaint ? $complaint->toArray() : [];
-
-        // Assuming you have a ComplaintAction model to store the actions
-        ComplaintLog::create([
-            'complaint_id' => $complaintId,
-            'user_id' => auth()->id(),
-            'action' => $action,
-            'old_data' => json_encode($previousData),
-            'new_data' => json_encode($complaint->toArray()),
-            // 'performed_at' => Carbon::now(),
-        ]);
-
-        Log::info('Action stored.', [
-            'complaint_id' => $complaintId,
-            'action' => $action,
-            'old_data' => $previousData,
-            'new_data' => $complaint->toArray()
-        ]);
+        return response()->json(['logs' => $complaintLog], Response::HTTP_OK);
     }
 }
+
+
+    // private function LogAction($complaintId, $action, $details)
+    // {
+    //     $complaint = $this->findComplaint($complaintId);
+    //     $previousData = $complaint ? $complaint->toArray() : [];
+
+    //     // ComplaintLog model to store the actions
+    //     ComplaintLog::create([
+    //         'complaint_id' => $complaintId,
+    //         'user_id' => auth()->id(),
+    //         'action' => $action,
+    //         'old_data' => json_encode($previousData),
+    //         'new_data' => json_encode($complaint->toArray()),
+    //         // 'performed_at' => Carbon::now(),
+    //     ]);
+
+    //     Log::info('Action stored.', [
+    //         'complaint_id' => $complaintId,
+    //         'action' => $action,
+    //         'old_data' => $previousData,
+    //         'new_data' => $complaint->toArray()
+    //     ]);
+    // }
+
+  
+
