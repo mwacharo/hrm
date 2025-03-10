@@ -37,7 +37,7 @@
         // Wait for the image to load before showing the login container
         document.addEventListener('DOMContentLoaded', function() {
             const bgImage = new Image();
-            bgImage.src = "/assets/img/bgs/login-bg.png"; // Update path if necessary
+            // bgImage.src = "/assets/img/bgs/login-bg.png"; // Update path if necessary
 
             bgImage.onload = function() {
                 document.body.classList.remove('loading');
