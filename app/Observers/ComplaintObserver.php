@@ -43,7 +43,7 @@ class ComplaintObserver
          ComplaintLog::create([
              'complaint_id' => $complaint->id,
              'user_id' => auth()->id(),
-             'action' => 'Updated Complaint',
+             'action' => 'Updated voice',
              'old_data' => json_encode($original),
              'new_data' => json_encode($complaint->toArray()),
              'changed_data' => json_encode($changes),
